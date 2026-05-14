@@ -32,10 +32,12 @@ The app follows a Compose-first MVVM approach:
 - Android SDK (minSdk 24, target/compileSdk 36)
 
 ### Configure the API base URL
-The base URL is set through `BuildConfig.API_BASE_URL` in:
-`/Users/alancarloshernandezhernandez/StudioProjects/CareMyCar/app/build.gradle.kts`
+The base URL is set through `apiBaseUrl` in `gradle.properties`.
 
-Update the `buildConfigField(...)` value to match your backend environment.
+For local emulator development, the default is:
+`http://10.0.2.2:5000/`
+
+Update the `apiBaseUrl` value in `gradle.properties` to match your backend environment.
 
 ### Run
 1. Open the project in Android Studio.

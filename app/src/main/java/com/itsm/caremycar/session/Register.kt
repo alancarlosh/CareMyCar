@@ -52,8 +52,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun Register(
     viewModel: RegisterViewModel = hiltViewModel(),
-    onNavigateToLogin: () -> Unit,
-    onNavigateToHome: () -> Unit
+    onNavigateToLogin: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 

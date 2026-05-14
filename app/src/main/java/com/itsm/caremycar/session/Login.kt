@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import android.util.Patterns
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -65,6 +66,8 @@ fun Login(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf("") }
+    var passwordError by remember { mutableStateOf("") }
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
@@ -83,9 +86,6 @@ fun Login(
             viewModel.clearError()
         }
     }
-
-    var emailError by remember { mutableStateOf("") }
-    var passwordError by remember { mutableStateOf("") }
 
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.login_animation))
 
@@ -119,7 +119,10 @@ fun Login(
 
         TextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = {
+                email = it
+                if (emailError.isNotEmpty()) emailError = ""
+            },
             label = {
                 Text(
                     emailError.ifEmpty { "Email" },
@@ -144,7 +147,10 @@ fun Login(
 
         TextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = {
+                password = it
+                if (passwordError.isNotEmpty()) passwordError = ""
+            },
             label = {
                 Text(
                     passwordError.ifEmpty { "Contraseña" },
@@ -188,7 +194,24 @@ fun Login(
         Button(
             onClick = {
                 keyboardController?.hide()
-                viewModel.login(email, password)
+                val trimmedEmail = email.trim()
+
+                if (trimmedEmail.isEmpty()) {
+                    emailError = "El email es requerido"
+                    return@Button
+                }
+
+                if (!Patterns.EMAIL_ADDRESS.matcher(trimmedEmail).matches()) {
+                    emailError = "Email inválido"
+                    return@Button
+                }
+
+                if (password.isBlank()) {
+                    passwordError = "La contraseña es requerida"
+                    return@Button
+                }
+
+                viewModel.login(trimmedEmail, password)
             },
             enabled = !uiState.isLoading,
             modifier = Modifier

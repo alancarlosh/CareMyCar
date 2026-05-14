@@ -6,6 +6,9 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+val apiBaseUrl: String = findProperty("apiBaseUrl") as? String
+    ?: "http://10.0.2.2:5000/"
+
 kotlin {
     jvmToolchain(17)
 }
@@ -23,19 +26,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "API_BASE_URL", "\"http://100.53.134.240/\"")
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         vectorDrawables {
             useSupportLibrary = true
-        }
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
         }
     }
 

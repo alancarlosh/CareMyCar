@@ -9,6 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Box
@@ -38,22 +39,33 @@ import androidx.navigation.navArgument
 import com.itsm.caremycar.R
 import com.itsm.caremycar.screens.user.AddVehicle
 import com.itsm.caremycar.screens.user.CarDetailsScreen
-import com.itsm.caremycar.screens.user.ProductDetailsScreen
 import com.itsm.caremycar.screens.user.UserScreen
 import com.itsm.caremycar.screens.agency.*
 import com.itsm.caremycar.session.Login
 import com.itsm.caremycar.session.LoginViewModel
 import com.itsm.caremycar.session.Register
 import com.itsm.caremycar.session.AppStartViewModel
+import kotlinx.coroutines.flow.SharedFlow
 
 @Composable
-fun AppNavigation(navController: NavHostController = rememberNavController()) {
+fun AppNavigation(
+    unauthorizedSessionEvents: SharedFlow<Unit>,
+    navController: NavHostController = rememberNavController()
+) {
     val appStartViewModel: AppStartViewModel = hiltViewModel()
     val appStartUiState by appStartViewModel.uiState.collectAsState()
 
     if (!appStartUiState.isReady) {
         SessionSplashScreen()
         return
+    }
+
+    LaunchedEffect(navController, unauthorizedSessionEvents) {
+        unauthorizedSessionEvents.collect {
+            navController.navigate("login") {
+                popUpTo(navController.graph.id) { inclusive = true }
+            }
+        }
     }
 
     NavHost(navController = navController, startDestination = appStartUiState.startDestination) {
@@ -76,11 +88,6 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             Register(
                 onNavigateToLogin = {
                     navController.popBackStack()
-                },
-                onNavigateToHome = {
-                    navController.navigate("user_screen") {
-                        popUpTo("register") { inclusive = true }
-                    }
                 }
             )
         }
@@ -125,12 +132,6 @@ fun AppNavigation(navController: NavHostController = rememberNavController()) {
             val vehicleId = backStackEntry.arguments?.getString("vehicleId").orEmpty()
             CarDetailsScreen(
                 vehicleId = vehicleId,
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable("product_details") {
-            ProductDetailsScreen(
                 onBack = { navController.popBackStack() }
             )
         }
