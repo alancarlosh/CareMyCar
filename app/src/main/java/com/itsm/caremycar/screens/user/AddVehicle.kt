@@ -21,6 +21,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -138,7 +139,7 @@ fun AddVehicle(
                         label = { Text("Marca *") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = makeExpanded) },
                         modifier = Modifier
-                            .menuAnchor()
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
                             .fillMaxWidth()
                     )
                     DropdownMenu(
@@ -170,7 +171,10 @@ fun AddVehicle(
                         label = { Text("Modelo *") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded) },
                         modifier = Modifier
-                            .menuAnchor()
+                            .menuAnchor(
+                                MenuAnchorType.PrimaryNotEditable,
+                                enabled = selectedMake.isNotBlank()
+                            )
                             .fillMaxWidth()
                     )
                     DropdownMenu(
