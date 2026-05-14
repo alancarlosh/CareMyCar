@@ -1,6 +1,7 @@
 package com.itsm.caremycar.repository
 
 import android.content.Context
+import com.itsm.caremycar.classes.User
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,15 +30,36 @@ class TokenManager @Inject constructor(
         sharedPreferences.edit { putString(KEY_TOKEN, token) }
     }
 
+    fun saveUser(user: User?) {
+        sharedPreferences.edit {
+            putString(KEY_USER_ID, user?.id)
+            putString(KEY_USER_EMAIL, user?.email)
+            putString(KEY_USER_ROLE, user?.role)
+            putString(KEY_USER_NAME, user?.name)
+        }
+    }
+
+    fun getUserRole(): String? = sharedPreferences.getString(KEY_USER_ROLE, null)
+
     fun getToken(): String? {
         return sharedPreferences.getString(KEY_TOKEN, null)
     }
 
     fun clearToken() {
-        sharedPreferences.edit { remove(KEY_TOKEN) }
+        sharedPreferences.edit {
+            remove(KEY_TOKEN)
+            remove(KEY_USER_ID)
+            remove(KEY_USER_EMAIL)
+            remove(KEY_USER_ROLE)
+            remove(KEY_USER_NAME)
+        }
     }
 
     companion object {
         private const val KEY_TOKEN = "access_token"
+        private const val KEY_USER_ID = "user_id"
+        private const val KEY_USER_EMAIL = "user_email"
+        private const val KEY_USER_ROLE = "user_role"
+        private const val KEY_USER_NAME = "user_name"
     }
 }

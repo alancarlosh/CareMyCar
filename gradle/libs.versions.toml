@@ -25,7 +25,6 @@ compose-material = "1.6.0"
 compose-material3 = "1.3.2"
 firebaseAppdistributionGradle = "5.2.1"
 securityCrypto = "1.1.0-alpha06"
-material3 = "1.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -61,7 +60,6 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 androidx-compose-material = { group = "androidx.compose.material", name = "material", version.ref = "compose-material" }
 firebase-appdistribution-gradle = { group = "com.google.firebase", name = "firebase-appdistribution-gradle", version.ref = "firebaseAppdistributionGradle" }
-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 
 
 [plugins]

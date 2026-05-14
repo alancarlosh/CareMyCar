@@ -29,12 +29,14 @@ class AuthRepository @Inject constructor(
 
                 if (response.isSuccessful && response.body() != null) {
                     val loginResponse = response.body()!!
+                    val user = loginResponse.user.toUser()
 
                     // Guardar token
                     tokenManager.saveToken(loginResponse.accessToken)
+                    tokenManager.saveUser(user)
 
                     // Convertir y retornar usuario
-                    Resource.Success(loginResponse.user.toUser())
+                    Resource.Success(user)
                 } else {
                     val errorMsg = when (response.code()) {
                         401 -> "Credenciales inválidas"
@@ -88,4 +90,6 @@ class AuthRepository @Inject constructor(
     }
 
     fun isLoggedIn(): Boolean = tokenManager.getToken() != null
+
+    fun getSavedUserRole(): String? = tokenManager.getUserRole()
 }
