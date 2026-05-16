@@ -31,13 +31,10 @@ The app follows a Compose-first MVVM approach:
 - JDK 17
 - Android SDK (minSdk 24, target/compileSdk 36)
 
-### Configure the API base URL
-The base URL is set through `apiBaseUrl` in `gradle.properties`.
-
-For local emulator development, the default is:
-`http://10.0.2.2:5000/`
-
-Update the `apiBaseUrl` value in `gradle.properties` to match your backend environment.
+### Configure API base URLs
+Base URLs are configured in `gradle.properties`:
+- `debugApiBaseUrl` defaults to the Android emulator host (`http://10.0.2.2:5000/`)
+- `releaseApiBaseUrl` must be replaced with the HTTPS production API before creating a release build
 
 ### Run
 1. Open the project in Android Studio.

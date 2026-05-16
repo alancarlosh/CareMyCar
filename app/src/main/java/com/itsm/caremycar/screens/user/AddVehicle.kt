@@ -2,6 +2,7 @@ package com.itsm.caremycar.screens.user
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,23 +13,16 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -46,9 +40,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.bumptech.glide.Glide
+import com.itsm.caremycar.screens.user.components.ClientBackground
+import com.itsm.caremycar.screens.user.components.ClientBlue
+import com.itsm.caremycar.screens.user.components.ClientFeedbackText
+import com.itsm.caremycar.screens.user.components.ClientInk
+import com.itsm.caremycar.screens.user.components.ClientLoadingPanel
+import com.itsm.caremycar.screens.user.components.ClientMetricChip
+import com.itsm.caremycar.screens.user.components.ClientPrimaryButton
+import com.itsm.caremycar.screens.user.components.ClientInlineAlert
+import com.itsm.caremycar.screens.user.components.ClientBadgeTone
+import com.itsm.caremycar.screens.user.components.ClientVehicleImagePlaceholder
+import com.itsm.caremycar.screens.user.components.ClientTopAppBar
+import com.itsm.caremycar.screens.user.components.ClientSelectField
+import com.itsm.caremycar.screens.user.components.ClientStepHeader
+import com.itsm.caremycar.screens.user.components.clientFieldColors
+import com.itsm.caremycar.screens.user.components.rememberClientFeedback
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddVehicle(
     onBack: () -> Unit,
@@ -64,39 +72,45 @@ fun AddVehicle(
     var mileage by remember { mutableStateOf("") }
     var color by remember { mutableStateOf("") }
     val context = LocalContext.current
+    val feedbackMessage by rememberClientFeedback(events = viewModel.events)
 
-    LaunchedEffect(uiState.isSuccess) {
-        if (uiState.isSuccess) {
-            viewModel.consumeSuccess()
-            onVehicleCreated()
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            if (event is AddVehicleEvent.Created) {
+                onVehicleCreated()
+            }
         }
     }
 
-    val makes = uiState.catalogVehicles
-        .map { it.make }
-        .distinct()
-        .sortedBy { it.lowercase(Locale.getDefault()) }
-    val modelsForMake = uiState.catalogVehicles
-        .filter { it.make == selectedMake }
-        .map { it.model }
-        .sorted()
-    val selectedCatalogVehicle = uiState.catalogVehicles.find {
-        it.make == selectedMake && it.model == selectedModel
+    val makes = remember(uiState.catalogVehicles) {
+        uiState.catalogVehicles
+            .map { it.make }
+            .distinct()
+            .sortedBy { it.lowercase(Locale.getDefault()) }
+    }
+    val modelsForMake = remember(uiState.catalogVehicles, selectedMake) {
+        uiState.catalogVehicles
+            .filter { it.make == selectedMake }
+            .map { it.model }
+            .sorted()
+    }
+    val selectedCatalogVehicle = remember(uiState.catalogVehicles, selectedMake, selectedModel) {
+        uiState.catalogVehicles.find {
+            it.make == selectedMake && it.model == selectedModel
+        }
     }
 
+    ClientBackground {
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
-            TopAppBar(
-                colors = topAppBarColors(
-                    containerColor = Color(0xFF4FA3D1),
-                    titleContentColor = MaterialTheme.colorScheme.primary
-                ),
+            ClientTopAppBar(
+                title = "Agregar vehículo",
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
                     }
                 },
-                title = { Text("Agregar vehículo") },
                 actions = {
                     TextButton(onClick = onBack) {
                         Text("Cancelar")
@@ -119,161 +133,184 @@ fun AddVehicle(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Selecciona del catálogo y completa los datos restantes",
+                    text = "Nuevo vehículo",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = ClientInk
+                )
+                Text(
+                    text = "Selecciona una ficha del catálogo y agrega los datos propios de tu auto.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = ClientInk.copy(alpha = 0.72f)
                 )
 
                 if (uiState.isCatalogLoading) {
-                    CircularProgressIndicator(modifier = Modifier.padding(vertical = 8.dp))
-                }
-
-                ExposedDropdownMenuBox(
-                    expanded = makeExpanded,
-                    onExpandedChange = { makeExpanded = !makeExpanded }
-                ) {
-                    OutlinedTextField(
-                        value = selectedMake,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Marca *") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = makeExpanded) },
-                        modifier = Modifier
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true)
-                            .fillMaxWidth()
+                    ClientLoadingPanel(
+                        title = "Cargando catálogo",
+                        description = "Estamos preparando las fichas disponibles para tu vehículo."
                     )
-                    DropdownMenu(
-                        expanded = makeExpanded,
-                        onDismissRequest = { makeExpanded = false }
-                    ) {
-                        makes.forEach { make ->
-                            DropdownMenuItem(
-                                text = { Text(make) },
-                                onClick = {
-                                    selectedMake = make
-                                    selectedModel = ""
-                                    makeExpanded = false
-                                }
-                            )
-                        }
-                    }
                 }
 
-                ExposedDropdownMenuBox(
-                    expanded = modelExpanded,
-                    onExpandedChange = { modelExpanded = !modelExpanded }
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(18.dp)
                 ) {
-                    OutlinedTextField(
-                        value = selectedModel,
-                        onValueChange = {},
-                        readOnly = true,
-                        enabled = selectedMake.isNotBlank(),
-                        label = { Text("Modelo *") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelExpanded) },
-                        modifier = Modifier
-                            .menuAnchor(
-                                MenuAnchorType.PrimaryNotEditable,
-                                enabled = selectedMake.isNotBlank()
-                            )
-                            .fillMaxWidth()
-                    )
-                    DropdownMenu(
-                        expanded = modelExpanded,
-                        onDismissRequest = { modelExpanded = false }
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        modelsForMake.forEach { model ->
-                            DropdownMenuItem(
-                                text = { Text(model) },
-                                onClick = {
-                                    selectedModel = model
-                                    modelExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+                        ClientStepHeader(
+                            step = "01",
+                            title = "Elige una ficha"
+                        )
+                        Text(
+                            text = "Primero selecciona marca y modelo del catálogo.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = ClientInk.copy(alpha = 0.66f)
+                        )
 
-                OutlinedTextField(
-                    value = selectedCatalogVehicle?.vehicleType.orEmpty(),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Tipo de vehículo") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    enabled = selectedCatalogVehicle != null
-                )
-                OutlinedTextField(
-                    value = selectedCatalogVehicle?.fuelType.orEmpty(),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Combustible") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    enabled = selectedCatalogVehicle != null
-                )
-                OutlinedTextField(
-                    value = selectedCatalogVehicle?.transmission.orEmpty(),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Transmisión") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    enabled = selectedCatalogVehicle != null
-                )
-
-                val firstImageUrl = selectedCatalogVehicle?.imageUrls?.firstOrNull()
-                if (firstImageUrl != null) {
-                    AndroidView(
-                        factory = { ctx ->
-                            android.widget.ImageView(ctx).apply {
-                                adjustViewBounds = false
-                                scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+                        ClientSelectField(
+                            value = selectedMake,
+                            label = "Marca *",
+                            expanded = makeExpanded,
+                            options = makes,
+                            onExpandedChange = { makeExpanded = it },
+                            onOptionSelected = { make ->
+                                selectedMake = make
+                                selectedModel = ""
+                                makeExpanded = false
                             }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth(0.92f)
-                            .height(190.dp)
-                            .align(Alignment.CenterHorizontally)
-                            .clip(RoundedCornerShape(14.dp))
-                            .padding(vertical = 4.dp),
-                        update = { imageView ->
-                            Glide.with(context).load(firstImageUrl).into(imageView)
+                        )
+
+                        ClientSelectField(
+                            value = selectedModel,
+                            label = "Modelo *",
+                            expanded = modelExpanded,
+                            options = modelsForMake,
+                            enabled = selectedMake.isNotBlank(),
+                            onExpandedChange = { modelExpanded = it },
+                            onOptionSelected = { model ->
+                                selectedModel = model
+                                modelExpanded = false
+                            }
+                        )
+                    }
+                }
+
+                if (selectedCatalogVehicle != null) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(18.dp)
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(0.dp)
+                        ) {
+                            val firstImageUrl = selectedCatalogVehicle.imageUrls.firstOrNull()
+                            if (firstImageUrl != null) {
+                                AndroidView(
+                                    factory = { ctx ->
+                                        android.widget.ImageView(ctx).apply {
+                                            adjustViewBounds = false
+                                            scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(190.dp)
+                                        .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)),
+                                    update = { imageView ->
+                                        Glide.with(context).load(firstImageUrl).into(imageView)
+                                    }
+                                )
+                            } else {
+                                ClientVehicleImagePlaceholder(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(190.dp)
+                                        .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)),
+                                    label = "Ficha sin imagen"
+                                )
+                            }
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                            ClientStepHeader(
+                                step = "02",
+                                title = "Vehículo seleccionado"
+                            )
+                            Text(
+                                text = "${selectedCatalogVehicle.make} ${selectedCatalogVehicle.model}",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = ClientInk
+                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                ClientMetricChip("Tipo", selectedCatalogVehicle.vehicleType)
+                                ClientMetricChip("Combustible", selectedCatalogVehicle.fuelType)
+                            }
+                            ClientMetricChip("Transmisión", selectedCatalogVehicle.transmission)
+                            }
                         }
-                    )
+                    }
                 }
 
-                OutlinedTextField(
-                    value = year,
-                    onValueChange = { year = it },
-                    label = { Text("Año *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-                OutlinedTextField(
-                    value = mileage,
-                    onValueChange = { mileage = it },
-                    label = { Text("Kilometraje actual *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-                OutlinedTextField(
-                    value = color,
-                    onValueChange = { color = it },
-                    label = { Text("Color") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(18.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        ClientStepHeader(
+                            step = "03",
+                            title = "Datos de tu auto"
+                        )
+                        OutlinedTextField(
+                            value = year,
+                            onValueChange = { year = it },
+                            label = { Text("Año *") },
+                            colors = clientFieldColors(),
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                        OutlinedTextField(
+                            value = mileage,
+                            onValueChange = { mileage = it },
+                            label = { Text("Kilometraje actual *") },
+                            colors = clientFieldColors(),
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                        OutlinedTextField(
+                            value = color,
+                            onValueChange = { color = it },
+                            label = { Text("Color") },
+                            colors = clientFieldColors(),
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                }
 
-                uiState.error?.let { error ->
-                    Text(
+                uiState.loadError?.let { error ->
+                    ClientInlineAlert(
                         text = error,
-                        color = MaterialTheme.colorScheme.error
+                        tone = ClientBadgeTone.Danger
                     )
                 }
 
-                Button(
+                feedbackMessage?.let { message ->
+                    ClientFeedbackText(message = message)
+                }
+
+                ClientPrimaryButton(
+                    text = "Guardar vehículo",
                     onClick = {
                         viewModel.createVehicle(
                             catalogVehicleId = selectedCatalogVehicle?.id,
@@ -285,17 +322,18 @@ fun AddVehicle(
                     enabled = !uiState.isLoading && selectedCatalogVehicle != null,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp)
-                ) {
-                    if (uiState.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.padding(end = 8.dp),
-                            strokeWidth = 2.dp
-                        )
+                        .padding(top = 8.dp),
+                    leadingContent = {
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.padding(end = 8.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
                     }
-                    Text("Guardar vehículo")
-                }
+                )
             }
         }
+    }
     }
 }

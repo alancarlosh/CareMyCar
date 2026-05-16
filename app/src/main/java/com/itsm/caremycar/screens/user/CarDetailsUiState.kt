@@ -6,6 +6,5 @@ data class CarDetailsUiState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val vehicle: Vehicle? = null,
-    val error: String? = null,
-    val successMessage: String? = null
+    val loadError: String? = null
 )

@@ -58,6 +58,8 @@ import com.itsm.caremycar.R
 @Composable
 fun Login(
     viewModel: LoginViewModel = hiltViewModel(),
+    sessionMessage: String? = null,
+    onSessionMessageShown: () -> Unit = {},
     onNavigateToRegister: () -> Unit,
     onNavigateToHome: (String) -> Unit
 ) {
@@ -84,6 +86,13 @@ fun Login(
             android.util.Log.e("LOGIN_ERROR", "Error recibido: $error")
             Toast.makeText(context, error, Toast.LENGTH_LONG).show()
             viewModel.clearError()
+        }
+    }
+
+    LaunchedEffect(sessionMessage) {
+        sessionMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            onSessionMessageShown()
         }
     }
 

@@ -14,9 +14,9 @@ data class CarMaintenanceUiState(
     val items: List<MaintenanceRecord> = emptyList(),
     val serviceOrders: List<ServiceOrder> = emptyList(),
     val orderQuote: ServiceQuote? = null,
+    val orderQuoteKey: String? = null,
     val recommendations: List<MaintenanceRecommendation> = emptyList(),
     val selectedItemForEdit: MaintenanceRecord? = null,
     val selectedItemForDelete: MaintenanceRecord? = null,
-    val error: String? = null,
-    val orderMessage: String? = null
+    val loadError: String? = null
 )

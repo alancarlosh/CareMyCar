@@ -207,4 +207,12 @@ interface ApiService {
         @Query("to") to: String? = null,
         @Query("status") status: String? = "FINALIZADO"
     ): Response<ResponseBody>
+
+    @GET("api/tools/monthly-cost")
+    suspend fun getMonthlyCostEstimate(
+        @Query("monthlyKm") monthlyKm: Double,
+        @Query("kmPerLiter") kmPerLiter: Double,
+        @Query("fuelPrice") fuelPrice: Double,
+        @Query("maintenancePerKm") maintenancePerKm: Double
+    ): Response<MonthlyCostEstimateResponse>
 }

@@ -12,6 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,6 +57,7 @@ fun AppNavigation(
 ) {
     val appStartViewModel: AppStartViewModel = hiltViewModel()
     val appStartUiState by appStartViewModel.uiState.collectAsState()
+    var sessionExpiredMessage by remember { mutableStateOf<String?>(null) }
 
     if (!appStartUiState.isReady) {
         SessionSplashScreen()
@@ -62,6 +66,7 @@ fun AppNavigation(
 
     LaunchedEffect(navController, unauthorizedSessionEvents) {
         unauthorizedSessionEvents.collect {
+            sessionExpiredMessage = "Tu sesión expiró. Inicia sesión nuevamente."
             navController.navigate("login") {
                 popUpTo(navController.graph.id) { inclusive = true }
             }
@@ -74,6 +79,8 @@ fun AppNavigation(
             val viewModel: LoginViewModel = hiltViewModel()
             Login(
                 viewModel = viewModel,
+                sessionMessage = sessionExpiredMessage,
+                onSessionMessageShown = { sessionExpiredMessage = null },
                 onNavigateToRegister = { navController.navigate("register") },
                 onNavigateToHome = { role ->
                     val destination = if (role == "admin") "admin_screen" else "user_screen"

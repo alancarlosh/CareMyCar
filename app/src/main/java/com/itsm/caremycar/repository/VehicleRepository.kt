@@ -80,27 +80,21 @@ class VehicleRepository @Inject constructor(
         }
     }
 
-    /**
-     * MOCK DATA FOR PROTOTYPE (Vehículos de catálogo)
-     */
     suspend fun listCatalogVehicles(): Resource<List<CatalogVehicle>> {
         return withContext(Dispatchers.IO) {
-            val mockItems = listOf(
-                CatalogVehicle("toyota_corolla", "Toyota", "Corolla", "sedan", "gasolina", "automatica", listOf("https://alden.mx/wp-content/uploads/2025/01/toyota-corolla-3.webp")),
-                CatalogVehicle("honda_civic", "Honda", "Civic", "sedan", "gasolina", "manual", listOf("https://acroadtrip.blob.core.windows.net/catalogo-imagenes/s/RT_V_2d38e1a6a430401099b785deaf510a2b.webp")),
-                CatalogVehicle("ford_ranger", "Ford", "Ranger", "pickup", "diesel", "manual", listOf("https://i.blogs.es/818b47/ford-ranger-raptor_/1366_2000.jpg")),
-                CatalogVehicle("nissan_sentra", "Nissan", "Sentra", "sedan", "gasolina", "automatica", listOf("https://www.nissannamicholula.com.mx/inventoryphotos/14041/24197nssn0100010264/ip/1.jpg")),
-                CatalogVehicle("volkswagen_jetta", "Volkswagen", "Jetta", "sedan", "gasolina", "automatica", listOf("https://us.as.com/autos/wp-content/uploads/2024/06/pixelcut-export-2024-06-26T091457.427-1264x734.jpg")),
-                CatalogVehicle("chevrolet_onix", "Chevrolet", "Onix", "hatchback", "gasolina", "manual", listOf("https://www.autoasesor.com/chevrolet/imagenes/onix2023.png")),
-                CatalogVehicle("chevrolet_tracker", "Chevrolet", "Tracker", "suv", "gasolina", "automatica", listOf("https://www.chevrolet.com.mx/content/dam/chevrolet/na/mx/es/index/crossovers-suvs/2025-tracker/specs/01-images/trims/2025-tracker-ls.jpg?imwidth=2400")),
-                CatalogVehicle("hyundai_tucson", "Hyundai", "Tucson", "suv", "hibrido", "automatica", listOf("https://di-uploads-pod27.dealerinspire.com/classichyundai/uploads/2024/05/2025-Hyundai-Tucson.jpg")),
-                CatalogVehicle("kia_rio", "Kia", "Rio", "hatchback", "gasolina", "manual", listOf("https://www.diariomotor.com/imagenes/2022/01/kia-rio-vista-lateral-794707.jpg?class=XL")),
-                CatalogVehicle("mazda_3", "Mazda", "3", "sedan", "gasolina", "automatica", listOf("https://autoanalitica.com.mx/wp-content/uploads/2024/06/Mazda3-2025-2048x1365.jpg")),
-                CatalogVehicle("toyota_hilux", "Toyota", "Hilux", "pickup", "diesel", "manual", listOf("https://espaillatmotors.com/website/wp-content/uploads/2024/11/1-22.jpg")),
-                CatalogVehicle("tesla_model3", "Tesla", "Model3", "sedan", "electrico", "automatica", listOf("https://cdn.wheel-size.com/thumbs/e7/7e/e77ea9ffa03676c4ba1a585985c6937c.jpg")),
-                CatalogVehicle("jeep_compass", "Jeep", "Compass", "suv", "gasolina", "automatica", listOf("https://www.megautos.com/wp-content/uploads/2024/04/Compass_blackhawk_001_.jpg"))
-            )
-            Resource.Success(mockItems)
+            try {
+                val response = apiService.listCatalogVehicles()
+                if (response.isSuccessful && response.body() != null) {
+                    Resource.Success(response.body()!!.items.map { it.toCatalogVehicle() })
+                } else {
+                    Resource.Error(
+                        parseBackendError(response.errorBody()?.string())
+                            ?: "No se pudo cargar el catálogo de vehículos."
+                    )
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.localizedMessage ?: "Error de conexión")
+            }
         }
     }
 
@@ -473,6 +467,36 @@ class VehicleRepository @Inject constructor(
                     Resource.Success(response.body()!!.bytes())
                 } else { Resource.Error("Error al generar el reporte PDF.") }
             } catch (e: Exception) { Resource.Error(e.localizedMessage ?: "Error de conexión") }
+        }
+    }
+
+    // --- TOOLS ---
+
+    suspend fun getMonthlyCostEstimate(
+        monthlyKm: Double,
+        kmPerLiter: Double,
+        fuelPrice: Double,
+        maintenancePerKm: Double
+    ): Resource<MonthlyCostEstimate> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getMonthlyCostEstimate(
+                    monthlyKm = monthlyKm,
+                    kmPerLiter = kmPerLiter,
+                    fuelPrice = fuelPrice,
+                    maintenancePerKm = maintenancePerKm
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    Resource.Success(response.body()!!.toMonthlyCostEstimate())
+                } else {
+                    Resource.Error(
+                        parseBackendError(response.errorBody()?.string())
+                            ?: "No se pudo calcular el costo mensual."
+                    )
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.localizedMessage ?: "Error de conexión")
+            }
         }
     }
 

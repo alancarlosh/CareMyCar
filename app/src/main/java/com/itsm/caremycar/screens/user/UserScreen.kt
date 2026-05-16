@@ -1,6 +1,8 @@
 package com.itsm.caremycar.screens.user
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -14,7 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,11 +28,11 @@ import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Storefront
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.DirectionsCar
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
@@ -40,10 +42,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -58,11 +59,29 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.bumptech.glide.Glide
 import com.itsm.caremycar.session.LogoutViewModel
+import com.itsm.caremycar.screens.user.components.ClientBackground
+import com.itsm.caremycar.screens.user.components.ClientBlue
+import com.itsm.caremycar.screens.user.components.ClientDialog
+import com.itsm.caremycar.screens.user.components.ClientInk
+import com.itsm.caremycar.screens.user.components.ClientLoadingPanel
+import com.itsm.caremycar.screens.user.components.ClientMetricChip
+import com.itsm.caremycar.screens.user.components.ClientMint
+import com.itsm.caremycar.screens.user.components.ClientSky
+import com.itsm.caremycar.screens.user.components.ClientTopAppBar
+import com.itsm.caremycar.screens.user.components.ClientSurface
+import com.itsm.caremycar.screens.user.components.ClientBadgeTone
+import com.itsm.caremycar.screens.user.components.ClientStatusBadge
+import com.itsm.caremycar.screens.user.components.ClientPrimaryButton
+import com.itsm.caremycar.screens.user.components.ClientVehicleImagePlaceholder
+import com.itsm.caremycar.screens.user.components.ClientDialogAction
+import com.itsm.caremycar.screens.user.components.ClientInlineAlert
+import com.itsm.caremycar.screens.user.components.ClientHeroMetric
 import com.itsm.caremycar.vehicle.Vehicle
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,7 +95,6 @@ fun UserScreen(
     viewModel: VehicleViewModel = hiltViewModel(),
     logoutViewModel: LogoutViewModel = hiltViewModel()
 ) {
-    val userPrimaryColor = Color(0xFF4FA3D1)
     val uiState by viewModel.uiState.collectAsState()
     val logoutUiState by logoutViewModel.uiState.collectAsState()
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
@@ -97,16 +115,16 @@ fun UserScreen(
         }
     }
 
+    ClientBackground {
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
-            TopAppBar(
-                colors = topAppBarColors(
-                    containerColor = userPrimaryColor,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White,
-                    actionIconContentColor = Color.White
-                ),
-                title = { Text(if (selectedTab == 0) "Mis vehículos" else "Productos") },
+            ClientTopAppBar(
+                title = when (selectedTab) {
+                    0 -> "Mis vehículos"
+                    1 -> "Productos"
+                    else -> "Costos"
+                },
                 actions = {
                     if (selectedTab == 0) {
                         IconButton(onClick = viewModel::refreshHome) {
@@ -143,49 +161,16 @@ fun UserScreen(
             )
         },
         bottomBar = {
-            BottomAppBar(
-                containerColor = userPrimaryColor,
-                contentColor = Color.White
-            ) {
-                TextButton(
-                    onClick = { selectedTab = 0 },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.DirectionsCar,
-                            contentDescription = "Mis vehículos",
-                            tint = if (selectedTab == 0) Color.White else Color.White.copy(alpha = 0.7f)
-                        )
-                        Text(
-                            text = "  Mis vehículos",
-                            color = if (selectedTab == 0) Color.White else Color.White.copy(alpha = 0.7f)
-                        )
-                    }
-                }
-                TextButton(
-                    onClick = { selectedTab = 1 },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Storefront,
-                            contentDescription = "Productos",
-                            tint = if (selectedTab == 1) Color.White else Color.White.copy(alpha = 0.7f)
-                        )
-                        Text(
-                            text = "  Productos",
-                            color = if (selectedTab == 1) Color.White else Color.White.copy(alpha = 0.7f)
-                        )
-                    }
-                }
-            }
+            ClientBottomNavigation(
+                selectedTab = selectedTab,
+                onSelectedTabChange = { selectedTab = it }
+            )
         },
         floatingActionButton = {
             if (selectedTab == 0) {
                 FloatingActionButton(
                     onClick = onAddVehicleClick,
-                    containerColor = userPrimaryColor,
+                    containerColor = ClientBlue,
                     contentColor = Color.White
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Agregar vehículo")
@@ -193,26 +178,40 @@ fun UserScreen(
             }
         }
     ) { innerPadding ->
-        if (selectedTab == 0) {
-            UserScreenContent(
-                innerPadding = innerPadding,
-                uiState = uiState,
-                onRetry = viewModel::loadVehicles,
-                onVehicleClick = onVehicleClick,
-                onDeleteVehicleClick = viewModel::requestDeleteVehicle
-            )
-        } else {
-            ProductDetailsContent(innerPadding = innerPadding)
+        AnimatedContent(
+            targetState = selectedTab,
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            label = "client-tab-content"
+        ) { tab ->
+            when (tab) {
+                0 -> {
+                    UserScreenContent(
+                        innerPadding = innerPadding,
+                        uiState = uiState,
+                        onRetry = viewModel::loadVehicles,
+                        onVehicleClick = onVehicleClick,
+                        onDeleteVehicleClick = viewModel::requestDeleteVehicle
+                    )
+                }
+                1 -> ProductDetailsContent(innerPadding = innerPadding)
+                else -> MonthlyCostContent(innerPadding = innerPadding)
+            }
         }
+    }
     }
 
     if (showRemindersDialog) {
-        AlertDialog(
+        ClientDialog(
             onDismissRequest = { showRemindersDialog = false },
-            title = { Text("Buzón de mantenimiento") },
+            title = "Buzón de mantenimiento",
             text = {
                 if (uiState.isLoadingReminders) {
-                    CircularProgressIndicator()
+                    ClientLoadingPanel(
+                        title = "Consultando recordatorios",
+                        description = "Revisamos el estado de tus próximos mantenimientos."
+                    )
+                } else if (uiState.remindersError != null) {
+                    Text(uiState.remindersError.orEmpty())
                 } else if (uiState.reminders.isEmpty()) {
                     Text("No hay vehículos con mantenimiento próximo por ahora.")
                 } else {
@@ -220,17 +219,33 @@ fun UserScreen(
                         uiState.reminders.take(6).forEach { reminder ->
                             val dueCount = reminder.items.count { it.status == "due" }
                             val upcomingCount = reminder.items.count { it.status == "upcoming" }
-                            Text(
-                                text = "${reminder.vehicleLabel}: $dueCount vencido(s), $upcomingCount próximo(s)"
-                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(
+                                    text = reminder.vehicleLabel,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = ClientInk
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    ClientStatusBadge(
+                                        text = "$dueCount vencido(s)",
+                                        tone = if (dueCount > 0) ClientBadgeTone.Danger else ClientBadgeTone.Neutral
+                                    )
+                                    ClientStatusBadge(
+                                        text = "$upcomingCount próximo(s)",
+                                        tone = if (upcomingCount > 0) ClientBadgeTone.Warning else ClientBadgeTone.Neutral
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showRemindersDialog = false }) {
-                    Text("Cerrar")
-                }
+                ClientDialogAction(
+                    text = "Cerrar",
+                    onClick = { showRemindersDialog = false },
+                    tone = ClientBadgeTone.Info
+                )
             }
         )
     }
@@ -247,30 +262,102 @@ fun UserScreen(
     }
 
     if (showLogoutDialog) {
-        AlertDialog(
+        ClientDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Cerrar sesión") },
+            title = "Cerrar sesión",
             text = { Text("¿Seguro que deseas cerrar sesión?") },
             dismissButton = {
-                TextButton(
+                ClientDialogAction(
+                    text = "Cancelar",
                     onClick = { showLogoutDialog = false },
                     enabled = !logoutUiState.isLoggingOut
-                ) {
-                    Text("Cancelar")
-                }
+                )
             },
             confirmButton = {
-                TextButton(
+                ClientDialogAction(
+                    text = "Cerrar sesión",
                     onClick = {
                         showLogoutDialog = false
                         logoutViewModel.logout()
                     },
-                    enabled = !logoutUiState.isLoggingOut
-                ) {
-                    Text("Cerrar sesión")
-                }
+                    enabled = !logoutUiState.isLoggingOut,
+                    tone = ClientBadgeTone.Info
+                )
             }
         )
+    }
+}
+
+@Composable
+private fun ClientBottomNavigation(
+    selectedTab: Int,
+    onSelectedTabChange: (Int) -> Unit
+) {
+    Surface(
+        color = ClientInk,
+        shadowElevation = 8.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            ClientBottomNavigationItem(
+                selected = selectedTab == 0,
+                label = "Vehículos",
+                icon = { tint -> Icon(Icons.Default.DirectionsCar, contentDescription = "Mis vehículos", tint = tint) },
+                onClick = { onSelectedTabChange(0) },
+                modifier = Modifier.weight(1f)
+            )
+            ClientBottomNavigationItem(
+                selected = selectedTab == 1,
+                label = "Productos",
+                icon = { tint -> Icon(Icons.Default.Storefront, contentDescription = "Productos", tint = tint) },
+                onClick = { onSelectedTabChange(1) },
+                modifier = Modifier.weight(1f)
+            )
+            ClientBottomNavigationItem(
+                selected = selectedTab == 2,
+                label = "Costos",
+                icon = { tint -> Icon(Icons.Outlined.Payments, contentDescription = "Costos", tint = tint) },
+                onClick = { onSelectedTabChange(2) },
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ClientBottomNavigationItem(
+    selected: Boolean,
+    label: String,
+    icon: @Composable (Color) -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier,
+        color = if (selected) ClientSurface else Color.Transparent,
+        shape = RoundedCornerShape(18.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 11.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val tint = if (selected) ClientInk else Color.White.copy(alpha = 0.72f)
+            icon(tint)
+            Text(
+                text = label,
+                modifier = Modifier.padding(start = 6.dp),
+                style = MaterialTheme.typography.labelMedium,
+                color = tint,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
@@ -290,21 +377,24 @@ private fun UserScreenContent(
                     .padding(innerPadding),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                ClientLoadingPanel(
+                    title = "Cargando garaje",
+                    description = "Estamos reuniendo tus vehículos y recordatorios."
+                )
             }
         }
 
-        uiState.error != null && uiState.vehicles.isEmpty() -> {
-            EmptyState(
+        uiState.loadError != null && uiState.vehicles.isEmpty() -> {
+            EmptyGarageState(
                 modifier = Modifier.padding(innerPadding),
-                message = uiState.error,
+                message = uiState.loadError,
                 actionLabel = "Reintentar",
                 onAction = onRetry
             )
         }
 
         uiState.vehicles.isEmpty() -> {
-            EmptyState(
+            EmptyGarageState(
                 modifier = Modifier.padding(innerPadding),
                 message = "Aún no tienes vehículos registrados.",
                 actionLabel = "Actualizar",
@@ -318,33 +408,16 @@ private fun UserScreenContent(
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
-                if (uiState.isLoadingDetail) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.padding(end = 12.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Text("Cargando detalle...")
-                    }
-                }
-
-                uiState.detailError?.let { detailError ->
-                    Text(
-                        text = detailError,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
-                    )
-                }
+                GarageHeroCard(
+                    vehicleCount = uiState.vehicles.size,
+                    reminderCount = uiState.reminders.size,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                )
 
                 uiState.deleteError?.let { deleteError ->
-                    Text(
+                    ClientInlineAlert(
                         text = deleteError,
-                        color = MaterialTheme.colorScheme.error,
+                        tone = ClientBadgeTone.Danger,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
                     )
                 }
@@ -374,29 +447,122 @@ private fun UserScreenContent(
 }
 
 @Composable
-private fun EmptyState(
+private fun EmptyGarageState(
     modifier: Modifier = Modifier,
     message: String,
     actionLabel: String,
     onAction: () -> Unit
 ) {
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(horizontal = 16.dp, vertical = 20.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center
-        )
-        Button(
-            onClick = onAction,
-            modifier = Modifier.padding(top = 16.dp)
+        ElevatedCard(
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(actionLabel)
+            Column(
+                modifier = Modifier.padding(horizontal = 22.dp, vertical = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Surface(
+                    color = ClientSky,
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.DirectionsCar,
+                        contentDescription = null,
+                        tint = ClientBlue,
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .size(30.dp)
+                    )
+                }
+                Text(
+                    text = "Tu cochera está lista",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = ClientInk
+                )
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = ClientInk.copy(alpha = 0.72f),
+                    textAlign = TextAlign.Center
+                )
+                ClientPrimaryButton(
+                    text = actionLabel,
+                    onClick = onAction,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GarageHeroCard(
+    vehicleCount: Int,
+    reminderCount: Int,
+    modifier: Modifier = Modifier
+) {
+    ElevatedCard(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(24.dp),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "Tu cochera",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = ClientInk
+                    )
+                    Text(
+                        text = "Control rápido de tus vehículos",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = ClientInk.copy(alpha = 0.62f)
+                    )
+                }
+                Surface(
+                    color = ClientSky,
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.DirectionsCar,
+                        contentDescription = null,
+                        tint = ClientBlue,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ClientHeroMetric(
+                    icon = Icons.Outlined.DirectionsCar,
+                    label = "Vehículos",
+                    value = vehicleCount.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+                ClientHeroMetric(
+                    icon = Icons.Outlined.CalendarMonth,
+                    label = "Recordatorios",
+                    value = reminderCount.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
@@ -413,15 +579,13 @@ fun VehicleCard(
     ElevatedCard(
         onClick = onClick,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+            containerColor = Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(22.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Column {
             if (imageUrl != null) {
                 AndroidView(
                     factory = { ctx ->
@@ -430,49 +594,59 @@ fun VehicleCard(
                         }
                     },
                     modifier = Modifier
-                        .width(96.dp)
-                        .height(72.dp)
-                        .clip(RoundedCornerShape(10.dp)),
+                        .fillMaxWidth()
+                        .height(158.dp)
+                        .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)),
                     update = { imageView ->
                         Glide.with(context).load(imageUrl).into(imageView)
                     }
                 )
             } else {
-                Box(
+                ClientVehicleImagePlaceholder(
                     modifier = Modifier
-                        .width(96.dp)
-                        .height(72.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .fillMaxWidth()
+                        .height(158.dp)
+                        .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)),
+                    label = "Vehículo sin foto"
                 )
             }
 
-            Column(
-                modifier = Modifier
-                    .padding(start = 12.dp)
-                    .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = vehicle.title,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = vehicle.subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "Km: ${vehicle.currentMileage?.toInt() ?: 0}",
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    Text(
+                        text = vehicle.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = ClientInk
+                    )
+                    Text(
+                        text = vehicle.subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = ClientInk.copy(alpha = 0.64f)
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ClientMetricChip(
+                            label = "Km",
+                            value = (vehicle.currentMileage?.toInt() ?: 0).toString()
+                        )
+                        vehicle.vehicleType?.takeIf { it.isNotBlank() }?.let { type ->
+                            ClientMetricChip(label = "Tipo", value = type)
+                        }
+                    }
+                }
 
-            IconButton(onClick = onDeleteClick) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Eliminar vehículo",
-                    tint = MaterialTheme.colorScheme.error
-                )
+                IconButton(onClick = onDeleteClick) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Eliminar vehículo",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }
@@ -486,9 +660,9 @@ private fun DeleteVehicleDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
+    ClientDialog(
         onDismissRequest = { if (!isDeleting) onDismiss() },
-        title = { Text("Eliminar vehículo") },
+        title = "Eliminar vehículo",
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("¿Seguro que deseas eliminar ${vehicle.title}? Esta acción no se puede deshacer.")
@@ -501,20 +675,27 @@ private fun DeleteVehicleDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isDeleting) {
-                Text("Cancelar")
-            }
+            ClientDialogAction(
+                text = "Cancelar",
+                onClick = onDismiss,
+                enabled = !isDeleting
+            )
         },
         confirmButton = {
-            TextButton(onClick = onConfirm, enabled = !isDeleting) {
-                if (isDeleting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.padding(end = 8.dp),
-                        strokeWidth = 2.dp
-                    )
+            ClientDialogAction(
+                text = "Eliminar",
+                onClick = onConfirm,
+                enabled = !isDeleting,
+                tone = ClientBadgeTone.Danger,
+                leadingContent = {
+                    if (isDeleting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.padding(end = 8.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
                 }
-                Text("Eliminar")
-            }
+            )
         }
     )
 }

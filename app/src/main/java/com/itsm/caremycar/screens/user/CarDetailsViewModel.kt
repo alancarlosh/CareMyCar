@@ -6,8 +6,11 @@ import com.itsm.caremycar.repository.VehicleRepository
 import com.itsm.caremycar.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -18,23 +21,25 @@ class CarDetailsViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(CarDetailsUiState())
     val uiState: StateFlow<CarDetailsUiState> = _uiState.asStateFlow()
+    private val _events = MutableSharedFlow<ClientFeedbackEvent>(extraBufferCapacity = 1)
+    internal val events: SharedFlow<ClientFeedbackEvent> = _events.asSharedFlow()
 
     fun loadVehicle(vehicleId: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null, successMessage = null)
+            _uiState.value = _uiState.value.copy(isLoading = true, loadError = null)
             when (val result = vehicleRepository.getVehicleById(vehicleId)) {
                 is Resource.Success -> {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         vehicle = result.data,
-                        error = null
+                        loadError = null
                     )
                 }
 
                 is Resource.Error -> {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = result.message
+                        loadError = result.message
                     )
                 }
 
@@ -51,7 +56,7 @@ class CarDetailsViewModel @Inject constructor(
         val mileageInt = mileage.trim().toIntOrNull()
 
         if (mileageInt == null) {
-            _uiState.value = _uiState.value.copy(error = "El kilometraje debe ser numérico.")
+            emitMessage("El kilometraje debe ser numérico.", isError = true)
             return
         }
 
@@ -59,26 +64,25 @@ class CarDetailsViewModel @Inject constructor(
         if (mileageInt != (current.currentMileage?.toInt() ?: 0)) payload["current_mileage"] = mileageInt
 
         if (payload.isEmpty()) {
-            _uiState.value = _uiState.value.copy(successMessage = "No hay cambios para guardar.", error = null)
+            emitMessage("No hay cambios para guardar.")
             return
         }
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isSaving = true, error = null, successMessage = null)
+            _uiState.value = _uiState.value.copy(isSaving = true)
             when (val result = vehicleRepository.updateVehicle(vehicleId, payload)) {
                 is Resource.Success -> {
+                    emitMessage("Vehículo actualizado correctamente.")
                     _uiState.value = _uiState.value.copy(
                         isSaving = false,
-                        vehicle = result.data,
-                        successMessage = "Vehículo actualizado correctamente.",
-                        error = null
+                        vehicle = result.data
                     )
                 }
 
                 is Resource.Error -> {
+                    emitMessage(result.message, isError = true)
                     _uiState.value = _uiState.value.copy(
-                        isSaving = false,
-                        error = result.message
+                        isSaving = false
                     )
                 }
 
@@ -87,7 +91,7 @@ class CarDetailsViewModel @Inject constructor(
         }
     }
 
-    fun clearMessages() {
-        _uiState.value = _uiState.value.copy(error = null, successMessage = null)
+    private fun emitMessage(text: String, isError: Boolean = false) {
+        _events.tryEmit(ClientFeedbackEvent.Message(text = text, isError = isError))
     }
 }

@@ -4,24 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.itsm.caremycar.repository.VehicleRepository
 import com.itsm.caremycar.util.Resource
-import com.itsm.caremycar.vehicle.Order
-import com.itsm.caremycar.vehicle.Part
 import com.itsm.caremycar.vehicle.toOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-data class ProductMarketplaceUiState(
-    val isLoading: Boolean = false,
-    val isBuying: Boolean = false,
-    val products: List<Part> = emptyList(),
-    val purchases: List<Order> = emptyList(),
-    val error: String? = null,
-    val message: String? = null
-)
 
 @HiltViewModel
 class ProductMarketplaceViewModel @Inject constructor(
@@ -29,6 +21,8 @@ class ProductMarketplaceViewModel @Inject constructor(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ProductMarketplaceUiState())
     val uiState: StateFlow<ProductMarketplaceUiState> = _uiState.asStateFlow()
+    private val _events = MutableSharedFlow<ClientFeedbackEvent>(extraBufferCapacity = 1)
+    internal val events: SharedFlow<ClientFeedbackEvent> = _events.asSharedFlow()
 
     init {
         refresh()
@@ -41,7 +35,7 @@ class ProductMarketplaceViewModel @Inject constructor(
 
     private fun loadProducts() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            _uiState.value = _uiState.value.copy(isLoading = true, loadError = null)
             when (val result = repository.listMarketplaceProducts(query = null, category = null, page = 1, limit = 100)) {
                 is Resource.Success -> {
                     _uiState.value = _uiState.value.copy(
@@ -53,7 +47,7 @@ class ProductMarketplaceViewModel @Inject constructor(
                 is Resource.Error -> {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = result.message
+                        loadError = result.message
                     )
                 }
 
@@ -73,7 +67,7 @@ class ProductMarketplaceViewModel @Inject constructor(
 
                 is Resource.Error -> {
                     _uiState.value = _uiState.value.copy(
-                        error = _uiState.value.error ?: result.message
+                        loadError = _uiState.value.loadError ?: result.message
                     )
                 }
 
@@ -85,34 +79,38 @@ class ProductMarketplaceViewModel @Inject constructor(
     fun buyNow(partId: String, quantity: Int) {
         val selectedPart = _uiState.value.products.find { it.id == partId }
         if (quantity <= 0) {
-            _uiState.value = _uiState.value.copy(error = "La cantidad debe ser mayor a 0.")
+            emitMessage("La cantidad debe ser mayor a 0.", isError = true)
             return
         }
         if (selectedPart != null && quantity > selectedPart.quantity) {
-            _uiState.value = _uiState.value.copy(error = "No puedes comprar más del inventario disponible.")
+            emitMessage("No puedes comprar más del inventario disponible.", isError = true)
             return
         }
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isBuying = true, error = null, message = null)
+            _uiState.value = _uiState.value.copy(isBuying = true)
             when (val result = repository.purchaseMarketplaceProduct(partId = partId, quantity = quantity)) {
                 is Resource.Success -> {
+                    emitMessage("Compra realizada (${result.data.quantity} pza). Estado: ${result.data.status}")
                     _uiState.value = _uiState.value.copy(
-                        isBuying = false,
-                        message = "Compra realizada (${result.data.quantity} pza). Estado: ${result.data.status}"
+                        isBuying = false
                     )
                     refresh()
                 }
 
                 is Resource.Error -> {
+                    emitMessage(result.message, isError = true)
                     _uiState.value = _uiState.value.copy(
-                        isBuying = false,
-                        error = result.message
+                        isBuying = false
                     )
                 }
 
                 Resource.Loading -> Unit
             }
         }
+    }
+
+    private fun emitMessage(text: String, isError: Boolean = false) {
+        _events.tryEmit(ClientFeedbackEvent.Message(text = text, isError = isError))
     }
 }

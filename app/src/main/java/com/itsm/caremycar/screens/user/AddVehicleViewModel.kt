@@ -3,12 +3,16 @@ package com.itsm.caremycar.screens.user
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.itsm.caremycar.repository.VehicleRepository
+import com.itsm.caremycar.screens.user.util.FormValidationResult
+import com.itsm.caremycar.screens.user.util.buildCreateVehicleRequest
 import com.itsm.caremycar.util.Resource
-import com.itsm.caremycar.vehicle.CreateVehicleRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -19,6 +23,8 @@ class AddVehicleViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(AddVehicleUiState())
     val uiState: StateFlow<AddVehicleUiState> = _uiState.asStateFlow()
+    private val _events = MutableSharedFlow<ClientFeedbackEvent>(extraBufferCapacity = 1)
+    internal val events: SharedFlow<ClientFeedbackEvent> = _events.asSharedFlow()
 
     init {
         loadCatalogVehicles()
@@ -26,20 +32,20 @@ class AddVehicleViewModel @Inject constructor(
 
     fun loadCatalogVehicles() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isCatalogLoading = true, error = null)
+            _uiState.value = _uiState.value.copy(isCatalogLoading = true, loadError = null)
             when (val result = vehicleRepository.listCatalogVehicles()) {
                 is Resource.Success -> {
                     _uiState.value = _uiState.value.copy(
                         isCatalogLoading = false,
                         catalogVehicles = result.data,
-                        error = null
+                        loadError = null
                     )
                 }
 
                 is Resource.Error -> {
                     _uiState.value = _uiState.value.copy(
                         isCatalogLoading = false,
-                        error = result.message
+                        loadError = result.message
                     )
                 }
 
@@ -54,41 +60,35 @@ class AddVehicleViewModel @Inject constructor(
         mileage: String,
         color: String
     ) {
-        val yearInt = year.trim().toIntOrNull()
-        val mileageInt = mileage.trim().toIntOrNull()
-
-        if (catalogVehicleId.isNullOrBlank() || yearInt == null || mileageInt == null) {
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                isSuccess = false,
-                error = "Selecciona un vehículo del catálogo y completa año/kilometraje."
+        val request = when (
+            val validationResult = buildCreateVehicleRequest(
+                catalogVehicleId = catalogVehicleId,
+                year = year,
+                mileage = mileage,
+                color = color
             )
-            return
+        ) {
+            is FormValidationResult.Valid -> validationResult.value
+            is FormValidationResult.Invalid -> {
+                emitMessage(validationResult.message, isError = true)
+                return
+            }
         }
 
-        val request = CreateVehicleRequest(
-            catalogVehicleId = catalogVehicleId,
-            year = yearInt,
-            currentMileage = mileageInt,
-            color = color.trim().ifBlank { null }
-        )
-
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, isSuccess = false, error = null)
+            _uiState.value = _uiState.value.copy(isLoading = true)
             when (val result = vehicleRepository.createVehicle(request)) {
                 is Resource.Success -> {
+                    _events.tryEmit(AddVehicleEvent.Created)
                     _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        isSuccess = true,
-                        error = null
+                        isLoading = false
                     )
                 }
 
                 is Resource.Error -> {
+                    emitMessage(result.message, isError = true)
                     _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        isSuccess = false,
-                        error = result.message
+                        isLoading = false
                     )
                 }
 
@@ -97,11 +97,11 @@ class AddVehicleViewModel @Inject constructor(
         }
     }
 
-    fun consumeSuccess() {
-        _uiState.value = _uiState.value.copy(isSuccess = false)
+    private fun emitMessage(text: String, isError: Boolean = false) {
+        _events.tryEmit(ClientFeedbackEvent.Message(text = text, isError = isError))
     }
+}
 
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
-    }
+internal sealed interface AddVehicleEvent : ClientFeedbackEvent {
+    data object Created : AddVehicleEvent
 }

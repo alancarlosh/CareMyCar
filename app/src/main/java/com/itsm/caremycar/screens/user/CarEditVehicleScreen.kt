@@ -1,13 +1,13 @@
 package com.itsm.caremycar.screens.user
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -23,6 +23,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.itsm.caremycar.screens.user.components.ClientInk
+import com.itsm.caremycar.screens.user.components.ClientLoadingPanel
+import com.itsm.caremycar.screens.user.components.ClientInlineAlert
+import com.itsm.caremycar.screens.user.components.ClientBadgeTone
+import com.itsm.caremycar.screens.user.components.ClientPrimaryButton
+import com.itsm.caremycar.screens.user.components.ClientPanel
+import com.itsm.caremycar.screens.user.components.ClientSectionHeader
+import com.itsm.caremycar.screens.user.components.ClientMetricChip
+import com.itsm.caremycar.screens.user.components.ClientFeedbackText
+import com.itsm.caremycar.screens.user.components.clientFieldColors
+import com.itsm.caremycar.screens.user.components.rememberClientFeedback
 
 @Composable
 fun CarEditVehicleContent(
@@ -38,6 +49,10 @@ fun CarEditVehicleContent(
     var fuelType by remember { mutableStateOf("") }
     var transmission by remember { mutableStateOf("") }
     var vehicleType by remember { mutableStateOf("") }
+    val feedbackMessage by rememberClientFeedback(
+        events = viewModel.events,
+        resetKey = vehicleId
+    )
 
     LaunchedEffect(vehicleId) {
         viewModel.loadVehicle(vehicleId)
@@ -59,116 +74,74 @@ fun CarEditVehicleContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 12.dp)
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         if (uiState.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.padding(vertical = 12.dp))
+            ClientLoadingPanel(
+                title = "Cargando ficha",
+                description = "Estamos recuperando la información más reciente del vehículo."
+            )
         }
 
-        uiState.error?.let {
-            Text(
+        uiState.loadError?.let {
+            ClientInlineAlert(
                 text = it,
-                color = MaterialTheme.colorScheme.error,
+                tone = ClientBadgeTone.Danger,
                 modifier = Modifier.padding(bottom = 10.dp)
             )
         }
 
-        uiState.successMessage?.let {
-            Text(
-                text = it,
-                color = MaterialTheme.colorScheme.primary,
+        feedbackMessage?.let {
+            ClientFeedbackText(
+                message = it,
                 modifier = Modifier.padding(bottom = 10.dp)
             )
         }
 
-        OutlinedTextField(
-            value = make,
-            onValueChange = {},
-            label = { Text("Marca") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            readOnly = true,
-            enabled = false
+        ClientSectionHeader(
+            eyebrow = "Ficha",
+            title = "Datos del vehículo",
+            description = "Consulta la información base y actualiza el kilometraje cuando sea necesario."
         )
-        OutlinedTextField(
-            value = model,
-            onValueChange = {},
-            label = { Text("Modelo") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
-            singleLine = true,
-            readOnly = true,
-            enabled = false
-        )
-        OutlinedTextField(
-            value = year,
-            onValueChange = {},
-            label = { Text("Año") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            readOnly = true,
-            enabled = false
+
+        ClientPanel {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    text = listOf(make, model).filter { it.isNotBlank() }.joinToString(" "),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = ClientInk
+                )
+                androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ClientMetricChip("Año", year.ifBlank { "-" })
+                    ClientMetricChip("Tipo", vehicleType.ifBlank { "-" })
+                }
+                androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ClientMetricChip("Combustible", fuelType.ifBlank { "-" })
+                    ClientMetricChip("Caja", transmission.ifBlank { "-" })
+                }
+                ClientMetricChip("Color", color.ifBlank { "-" })
+            }
+        }
+        ClientSectionHeader(
+            eyebrow = "Actualización",
+            title = "Kilometraje",
+            description = "Mantener este dato al día mejora la precisión de las recomendaciones."
         )
         OutlinedTextField(
             value = mileage,
             onValueChange = { mileage = it },
             label = { Text("Kilometraje actual") },
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
+                .fillMaxWidth(),
             singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            colors = clientFieldColors()
         )
-        OutlinedTextField(
-            value = color,
-            onValueChange = {},
-            label = { Text("Color") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
-            singleLine = true,
-            readOnly = true,
-            enabled = false
-        )
-        OutlinedTextField(
-            value = fuelType,
-            onValueChange = {},
-            label = { Text("Combustible") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
-            singleLine = true,
-            readOnly = true,
-            enabled = false
-        )
-        OutlinedTextField(
-            value = transmission,
-            onValueChange = {},
-            label = { Text("Transmisión") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
-            singleLine = true,
-            readOnly = true,
-            enabled = false
-        )
-        OutlinedTextField(
-            value = vehicleType,
-            onValueChange = {},
-            label = { Text("Tipo de vehículo") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
-            singleLine = true,
-            readOnly = true,
-            enabled = false
-        )
-
-        Button(
+        ClientPrimaryButton(
+            text = "Guardar cambios",
             onClick = {
                 viewModel.updateVehicle(
                     vehicleId = vehicleId,
@@ -178,15 +151,15 @@ fun CarEditVehicleContent(
             enabled = !uiState.isSaving && !uiState.isLoading,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp)
-        ) {
-            if (uiState.isSaving) {
-                CircularProgressIndicator(
-                    modifier = Modifier.padding(end = 8.dp),
-                    strokeWidth = 2.dp
-                )
+                .padding(top = 6.dp),
+            leadingContent = {
+                if (uiState.isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.padding(end = 8.dp),
+                        strokeWidth = 2.dp
+                    )
+                }
             }
-            Text("Guardar cambios")
-        }
+        )
     }
 }

@@ -6,8 +6,10 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
-val apiBaseUrl: String = findProperty("apiBaseUrl") as? String
+val debugApiBaseUrl: String = findProperty("debugApiBaseUrl") as? String
     ?: "http://10.0.2.2:5000/"
+val releaseApiBaseUrl: String = findProperty("releaseApiBaseUrl") as? String
+    ?: "https://example.invalid/"
 
 kotlin {
     jvmToolchain(17)
@@ -26,15 +28,29 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    buildTypes {
+        debug {
+            buildConfigField("String", "API_BASE_URL", "\"$debugApiBaseUrl\"")
+        }
+        release {
+            buildConfigField("String", "API_BASE_URL", "\"$releaseApiBaseUrl\"")
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     buildFeatures {
@@ -89,6 +105,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.security.crypto)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
