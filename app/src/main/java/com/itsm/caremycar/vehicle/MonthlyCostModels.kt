@@ -11,15 +11,15 @@ data class MonthlyCostEstimate(
 )
 
 data class MonthlyCostEstimateResponse(
-    @SerializedName("monthlyKm")
+    @SerializedName(value = "monthlyKm", alternate = ["monthly_km"])
     val monthlyKm: Double,
-    @SerializedName("litersNeeded")
+    @SerializedName(value = "litersNeeded", alternate = ["liters_needed"])
     val litersNeeded: Double,
-    @SerializedName("fuelCost")
+    @SerializedName(value = "fuelCost", alternate = ["fuel_cost"])
     val fuelCost: Double,
-    @SerializedName("maintenanceCost")
+    @SerializedName(value = "maintenanceCost", alternate = ["maintenance_cost"])
     val maintenanceCost: Double,
-    @SerializedName("totalMonthlyCost")
+    @SerializedName(value = "totalMonthlyCost", alternate = ["total_monthly_cost"])
     val totalMonthlyCost: Double
 )
 

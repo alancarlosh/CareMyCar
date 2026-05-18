@@ -53,12 +53,12 @@ class CarMaintenanceViewModel @Inject constructor(
 
             updateState {
                 copy(
-                isLoading = false,
-                items = loadResult.items.orEmpty(),
-                recommendations = loadResult.recommendations.orEmpty(),
-                serviceOrders = loadResult.serviceOrders.orEmpty(),
-                loadError = loadResult.error
-            )
+                    isLoading = false,
+                    items = loadResult.items.orEmpty(),
+                    recommendations = loadResult.recommendations.orEmpty(),
+                    serviceOrders = loadResult.serviceOrders.orEmpty(),
+                    loadError = loadResult.error
+                )
             }
         }
     }

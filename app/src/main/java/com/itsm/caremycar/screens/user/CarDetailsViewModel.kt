@@ -3,6 +3,8 @@ package com.itsm.caremycar.screens.user
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.itsm.caremycar.repository.VehicleRepository
+import com.itsm.caremycar.screens.user.util.FormValidationResult
+import com.itsm.caremycar.screens.user.util.buildVehicleMileageUpdatePayload
 import com.itsm.caremycar.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -53,15 +55,18 @@ class CarDetailsViewModel @Inject constructor(
         mileage: String
     ) {
         val current = _uiState.value.vehicle ?: return
-        val mileageInt = mileage.trim().toIntOrNull()
-
-        if (mileageInt == null) {
-            emitMessage("El kilometraje debe ser numérico.", isError = true)
-            return
+        val payload = when (
+            val validationResult = buildVehicleMileageUpdatePayload(
+                mileage = mileage,
+                currentMileage = current.currentMileage?.toInt() ?: 0
+            )
+        ) {
+            is FormValidationResult.Valid -> validationResult.value
+            is FormValidationResult.Invalid -> {
+                emitMessage(validationResult.message, isError = true)
+                return
+            }
         }
-
-        val payload = mutableMapOf<String, Any>()
-        if (mileageInt != (current.currentMileage?.toInt() ?: 0)) payload["current_mileage"] = mileageInt
 
         if (payload.isEmpty()) {
             emitMessage("No hay cambios para guardar.")

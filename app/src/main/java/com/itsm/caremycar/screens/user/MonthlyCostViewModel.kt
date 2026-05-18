@@ -3,6 +3,8 @@ package com.itsm.caremycar.screens.user
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.itsm.caremycar.repository.VehicleRepository
+import com.itsm.caremycar.screens.user.util.FormValidationResult
+import com.itsm.caremycar.screens.user.util.MonthlyCostInputValidator
 import com.itsm.caremycar.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,31 +26,28 @@ class MonthlyCostViewModel @Inject constructor(
         fuelPrice: String,
         maintenancePerKm: String
     ) {
-        val monthlyKmValue = monthlyKm.toDoubleOrNull()
-        val kmPerLiterValue = kmPerLiter.toDoubleOrNull()
-        val fuelPriceValue = fuelPrice.toDoubleOrNull()
-        val maintenancePerKmValue = maintenancePerKm.toDoubleOrNull()
-
-        if (
-            monthlyKmValue == null || monthlyKmValue <= 0 ||
-            kmPerLiterValue == null || kmPerLiterValue <= 0 ||
-            fuelPriceValue == null || fuelPriceValue <= 0 ||
-            maintenancePerKmValue == null || maintenancePerKmValue < 0
-        ) {
+        val validation = MonthlyCostInputValidator.validate(
+            monthlyKm = monthlyKm,
+            kmPerLiter = kmPerLiter,
+            fuelPrice = fuelPrice,
+            maintenancePerKm = maintenancePerKm
+        )
+        if (validation is FormValidationResult.Invalid) {
             _uiState.value = _uiState.value.copy(
-                error = "Ingresa valores numéricos válidos para calcular el costo mensual."
+                error = validation.message
             )
             return
         }
+        val input = (validation as FormValidationResult.Valid).value
 
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isCalculating = true, error = null)
             when (
                 val result = repository.getMonthlyCostEstimate(
-                    monthlyKm = monthlyKmValue,
-                    kmPerLiter = kmPerLiterValue,
-                    fuelPrice = fuelPriceValue,
-                    maintenancePerKm = maintenancePerKmValue
+                    monthlyKm = input.monthlyKm,
+                    kmPerLiter = input.kmPerLiter,
+                    fuelPrice = input.fuelPrice,
+                    maintenancePerKm = input.maintenancePerKm
                 )
             ) {
                 is Resource.Success -> {

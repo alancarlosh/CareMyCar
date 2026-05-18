@@ -22,7 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.itsm.caremycar.screens.user.util.MarketplaceQuantityValidator
 import com.itsm.caremycar.screens.user.util.formatMxn
+import com.itsm.caremycar.screens.user.util.sanitizeWholeNumberInput
 import com.itsm.caremycar.vehicle.Part
 
 @Composable
@@ -32,10 +34,12 @@ internal fun MarketplaceProductCard(
     onBuyNow: (quantity: Int) -> Unit
 ) {
     var quantityText by remember(part.id) { mutableStateOf("1") }
-    val quantityValue = quantityText.toIntOrNull()
-    val validQuantity = quantityValue != null && quantityValue in 1..part.quantity
-    val estimatedTotal = if (validQuantity) part.price * (quantityValue ?: 0) else 0.0
-    val currentQuantityForButtons = (quantityValue ?: 1).coerceAtLeast(1)
+    val quantityState = MarketplaceQuantityValidator.validate(
+        quantityText = quantityText,
+        stock = part.quantity,
+        unitPrice = part.price
+    )
+    val currentQuantityForButtons = (quantityState.quantity ?: 1).coerceAtLeast(1)
 
     ElevatedCard(
         colors = CardDefaults.cardColors(
@@ -88,7 +92,7 @@ internal fun MarketplaceProductCard(
                 OutlinedTextField(
                     value = quantityText,
                     onValueChange = { input ->
-                        quantityText = input.filter { it.isDigit() }.take(4)
+                        quantityText = sanitizeWholeNumberInput(input)
                     },
                     label = { Text("Cantidad a comprar") },
                     colors = clientFieldColors(),
@@ -96,23 +100,23 @@ internal fun MarketplaceProductCard(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
-                if (quantityText.isNotBlank() && !validQuantity) {
+                if (quantityText.isNotBlank() && !quantityState.isValid) {
                     ClientInlineAlert(
                         text = "Ingresa una cantidad entre 1 y ${part.quantity}.",
                         tone = ClientBadgeTone.Danger
                     )
                 }
-                if (validQuantity) {
+                if (quantityState.isValid) {
                     Text(
-                        "Costo estimado: ${formatMxn(estimatedTotal)}",
+                        "Costo estimado: ${formatMxn(quantityState.estimatedTotal)}",
                         style = MaterialTheme.typography.titleSmall,
                         color = ClientBlue
                     )
                 }
                 ClientPrimaryButton(
                     text = if (part.quantity > 0) "Comprar ahora" else "Sin inventario",
-                    onClick = { onBuyNow(quantityValue ?: 0) },
-                    enabled = !isBuying && part.quantity > 0 && validQuantity,
+                    onClick = { onBuyNow(quantityState.quantity ?: 0) },
+                    enabled = !isBuying && part.quantity > 0 && quantityState.isValid,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
