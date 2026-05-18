@@ -78,6 +78,7 @@ import com.itsm.caremycar.screens.user.components.ClientSurface
 import com.itsm.caremycar.screens.user.components.ClientBadgeTone
 import com.itsm.caremycar.screens.user.components.ClientStatusBadge
 import com.itsm.caremycar.screens.user.components.ClientPrimaryButton
+import com.itsm.caremycar.screens.user.components.ClientSecondaryButton
 import com.itsm.caremycar.screens.user.components.ClientVehicleImagePlaceholder
 import com.itsm.caremycar.screens.user.components.ClientDialogAction
 import com.itsm.caremycar.screens.user.components.ClientInlineAlert
@@ -189,6 +190,7 @@ fun UserScreen(
                         innerPadding = innerPadding,
                         uiState = uiState,
                         onRetry = viewModel::loadVehicles,
+                        onAddVehicleClick = onAddVehicleClick,
                         onVehicleClick = onVehicleClick,
                         onDeleteVehicleClick = viewModel::requestDeleteVehicle
                     )
@@ -366,6 +368,7 @@ private fun UserScreenContent(
     innerPadding: PaddingValues,
     uiState: VehicleUiState,
     onRetry: () -> Unit,
+    onAddVehicleClick: () -> Unit,
     onVehicleClick: (String) -> Unit,
     onDeleteVehicleClick: (Vehicle) -> Unit
 ) {
@@ -389,7 +392,9 @@ private fun UserScreenContent(
                 modifier = Modifier.padding(innerPadding),
                 message = uiState.loadError,
                 actionLabel = "Reintentar",
-                onAction = onRetry
+                onAction = onRetry,
+                secondaryActionLabel = null,
+                onSecondaryAction = null
             )
         }
 
@@ -397,8 +402,10 @@ private fun UserScreenContent(
             EmptyGarageState(
                 modifier = Modifier.padding(innerPadding),
                 message = "Aún no tienes vehículos registrados.",
-                actionLabel = "Actualizar",
-                onAction = onRetry
+                actionLabel = "Agregar vehículo",
+                onAction = onAddVehicleClick,
+                secondaryActionLabel = "Actualizar",
+                onSecondaryAction = onRetry
             )
         }
 
@@ -451,14 +458,23 @@ private fun EmptyGarageState(
     modifier: Modifier = Modifier,
     message: String,
     actionLabel: String,
-    onAction: () -> Unit
+    onAction: () -> Unit,
+    secondaryActionLabel: String?,
+    onSecondaryAction: (() -> Unit)?
 ) {
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 20.dp),
-        contentAlignment = Alignment.Center
+            .padding(horizontal = 16.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.Center
     ) {
+        GarageHeroCard(
+            vehicleCount = 0,
+            reminderCount = 0
+        )
+
+        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(14.dp))
+
         ElevatedCard(
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
@@ -494,11 +510,18 @@ private fun EmptyGarageState(
                     color = ClientInk.copy(alpha = 0.72f),
                     textAlign = TextAlign.Center
                 )
-                ClientPrimaryButton(
-                    text = actionLabel,
-                    onClick = onAction,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    ClientPrimaryButton(
+                        text = actionLabel,
+                        onClick = onAction
+                    )
+                    if (secondaryActionLabel != null && onSecondaryAction != null) {
+                        ClientSecondaryButton(
+                            text = secondaryActionLabel,
+                            onClick = onSecondaryAction
+                        )
+                    }
+                }
             }
         }
     }

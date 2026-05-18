@@ -1,16 +1,13 @@
 package com.itsm.caremycar.session
 
 import android.widget.Toast
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -19,14 +16,10 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,15 +32,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-
 
 @Composable
 fun Register(
@@ -66,7 +56,6 @@ fun Register(
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
 
-    // Navegar cuando registro exitoso
     LaunchedEffect(uiState.isRegistered) {
         if (uiState.isRegistered) {
             Toast.makeText(
@@ -78,7 +67,6 @@ fun Register(
         }
     }
 
-    // Mostrar errores
     LaunchedEffect(uiState.error) {
         uiState.error?.let { error ->
             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
@@ -86,215 +74,127 @@ fun Register(
         }
     }
 
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(64.dp))
-
-
-        Text(
-            text = "Crear Cuenta",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Regístrate en Cuidar mi auto",
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Campo Nombre
-        TextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Nombre (opcional)") },
-            leadingIcon = {
-                Icon(Icons.Rounded.Person, contentDescription = null)
-            },
-            shape = RoundedCornerShape(8.dp),
+    AuthBackground {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp, horizontal = 20.dp),
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Campo Email
-        TextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
-            leadingIcon = {
-                Icon(Icons.Rounded.AccountCircle, contentDescription = null)
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next
-            ),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp, horizontal = 20.dp),
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Campo Contraseña
-        TextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Contraseña") },
-            leadingIcon = {
-                Icon(Icons.Rounded.Lock, contentDescription = null)
-            },
-            visualTransformation = if (passwordVisible)
-                VisualTransformation.None
-            else
-                PasswordVisualTransformation(),
-            trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = if (passwordVisible)
-                            Icons.Default.Visibility
-                        else
-                            Icons.Default.VisibilityOff,
-                        contentDescription = null
-                    )
-                }
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Next
-            ),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp, horizontal = 20.dp),
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Campo Confirmar Contraseña
-        TextField(
-            value = confirmPassword,
-            onValueChange = { confirmPassword = it },
-            label = { Text("Confirmar Contraseña") },
-            leadingIcon = {
-                Icon(Icons.Rounded.Lock, contentDescription = null)
-            },
-            visualTransformation = if (confirmPasswordVisible)
-                VisualTransformation.None
-            else
-                PasswordVisualTransformation(),
-            trailingIcon = {
-                IconButton(onClick = {
-                    confirmPasswordVisible = !confirmPasswordVisible
-                }) {
-                    Icon(
-                        imageVector = if (confirmPasswordVisible)
-                            Icons.Default.Visibility
-                        else
-                            Icons.Default.VisibilityOff,
-                        contentDescription = null
-                    )
-                }
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    keyboardController?.hide()
-                }
-            ),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp, horizontal = 20.dp),
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Botón Registrar
-        Button(
-            onClick = {
-                keyboardController?.hide()
-
-                if (password != confirmPassword) {
-                    Toast.makeText(
-                        context,
-                        "Las contraseñas no coinciden",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return@Button
-                }
-
-                viewModel.register(
-                    email = email,
-                    password = password,
-                    name = name.takeIf { it.isNotBlank() }
-                )
-            },
-            enabled = !uiState.isLoading,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 90.dp)
-                .height(50.dp)
+                .fillMaxSize()
+                .padding(horizontal = 20.dp, vertical = 18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = Color.White
+            AuthHero(
+                eyebrow = "Nuevo perfil",
+                title = "Crea tu cuenta",
+                description = "Configura tu acceso y empieza a gestionar vehículos con una experiencia más clara.",
+                modifier = Modifier.padding(horizontal = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            AuthPanel {
+                AuthTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = "Nombre (opcional)",
+                    leadingIcon = Icons.Rounded.Person,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
                 )
-            } else {
-                Text(
+
+                AuthTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = "Email",
+                    leadingIcon = Icons.Rounded.AccountCircle,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next
+                    )
+                )
+
+                AuthTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = "Contraseña",
+                    leadingIcon = Icons.Rounded.Lock,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Next
+                    ),
+                    trailingContent = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = null
+                            )
+                        }
+                    }
+                )
+
+                AuthTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = "Confirmar contraseña",
+                    leadingIcon = Icons.Rounded.Lock,
+                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
+                    trailingContent = {
+                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                            Icon(
+                                imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = null
+                            )
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                AuthSubmitButton(
                     text = "Registrarse",
-                    fontSize = 16.sp
+                    onClick = {
+                        keyboardController?.hide()
+
+                        if (password != confirmPassword) {
+                            Toast.makeText(
+                                context,
+                                "Las contraseñas no coinciden",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@AuthSubmitButton
+                        }
+
+                        viewModel.register(
+                            email = email,
+                            password = password,
+                            name = name.takeIf { it.isNotBlank() }
+                        )
+                    },
+                    enabled = !uiState.isLoading,
+                    content = {
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(text = "Registrarse")
+                        }
+                    }
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-        Row {
-            Text(text = "¿Ya tienes cuenta? ")
-            Text(
-                text = "Inicia sesión",
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable {
-                    onNavigateToLogin()
-                }
+            AuthFooter(
+                prompt = "¿Ya tienes cuenta?",
+                action = "Inicia sesión",
+                onActionClick = onNavigateToLogin
             )
         }
     }
