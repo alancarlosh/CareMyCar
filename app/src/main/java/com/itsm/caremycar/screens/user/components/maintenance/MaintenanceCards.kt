@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -23,16 +24,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.itsm.caremycar.screens.user.CarMaintenanceUiState
-import com.itsm.caremycar.screens.user.components.ClientAmber
 import com.itsm.caremycar.screens.user.components.ClientInk
+import com.itsm.caremycar.screens.user.components.ClientBlue
 import com.itsm.caremycar.screens.user.components.ClientMetricChip
-import com.itsm.caremycar.screens.user.components.ClientMint
+import com.itsm.caremycar.screens.user.components.ClientSky
+import com.itsm.caremycar.screens.user.components.ClientSurface
 import com.itsm.caremycar.screens.user.components.ClientPanel
 import com.itsm.caremycar.screens.user.components.ClientSectionHeader
 import com.itsm.caremycar.screens.user.components.ClientBadgeTone
@@ -130,17 +133,76 @@ internal fun ServiceRequestCard(
 
 @Composable
 private fun QuoteCard(quote: ServiceQuote) {
-    ClientPanel {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Cotización estimada", style = MaterialTheme.typography.labelLarge, color = ClientInk.copy(alpha = 0.72f))
-            Text(formatMxn(quote.suggestedTotalMxn), style = MaterialTheme.typography.headlineSmall, color = ClientInk)
+    androidx.compose.material3.Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = ClientSky.copy(alpha = 0.62f),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = "COTIZACIÓN ESTIMADA",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = ClientBlue
+            )
+            Text(
+                text = formatMxn(quote.suggestedTotalMxn),
+                style = MaterialTheme.typography.headlineMedium,
+                color = ClientInk
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ClientMetricChip("Productos", formatMxn(quote.productsTotalMxn))
-                ClientMetricChip("Mano de obra", formatMxn(quote.laborTotalMxn))
+                QuoteDetailMetric(
+                    label = "Refacciones",
+                    value = formatMxn(quote.productsTotalMxn),
+                    modifier = Modifier.weight(1f)
+                )
+                QuoteDetailMetric(
+                    label = "Mano de obra",
+                    value = formatMxn(quote.laborTotalMxn),
+                    modifier = Modifier.weight(1f)
+                )
             }
-            quote.products.forEach { product ->
-                Text("${product.name} x${product.qty} · ${formatMxn(product.unitPriceMxn)}", style = MaterialTheme.typography.bodySmall)
+            if (quote.products.isNotEmpty()) {
+                quote.products.forEach { product ->
+                    Text(
+                        "${product.name} · ${product.qty} pza. · ${formatMxn(product.unitPriceMxn)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ClientInk.copy(alpha = 0.72f)
+                    )
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun QuoteDetailMetric(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    androidx.compose.material3.Surface(
+        modifier = modifier,
+        color = Color.White.copy(alpha = 0.76f),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = ClientInk.copy(alpha = 0.6f)
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleSmall,
+                color = ClientInk
+            )
         }
     }
 }
@@ -226,30 +288,115 @@ internal fun MaintenanceRecordCard(item: MaintenanceRecord, onEdit: () -> Unit, 
 
 @Composable
 internal fun ServiceOrderCard(order: ServiceOrder) {
-    ElevatedCard(colors = CardDefaults.cardColors(containerColor = ClientMint.copy(alpha = 0.48f))) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(order.serviceType.ifBlank { "Servicio" }, style = MaterialTheme.typography.titleSmall, color = ClientInk)
+    ElevatedCard(
+        colors = CardDefaults.cardColors(containerColor = ClientSurface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "SERVICIO SOLICITADO",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = ClientBlue,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        order.serviceType.ifBlank { "Servicio" },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = ClientInk
+                    )
+                }
                 ClientStatusBadge(
-                    text = order.status,
+                    text = serviceOrderStatusLabel(order.status),
                     tone = serviceOrderTone(order.status)
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ClientMetricChip("Fecha", order.scheduledDate.ifBlank { "N/D" })
-                ClientMetricChip("Estimado", formatMxn(order.estimatedCost ?: 0.0))
+                ServiceOrderMetric(
+                    label = "Fecha",
+                    value = order.scheduledDate.ifBlank { "Sin fecha" },
+                    modifier = Modifier.weight(1f)
+                )
+                ServiceOrderMetric(
+                    label = "Estimado",
+                    value = formatMxn(order.estimatedCost ?: 0.0),
+                    modifier = Modifier.weight(1f)
+                )
             }
             order.costBreakdown?.let { breakdown ->
-                Text(
-                    "Productos: ${formatMxn(breakdown.productsTotalMxn)} · Mano de obra: ${formatMxn(breakdown.laborTotalMxn)}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                breakdown.products.forEach { product ->
-                    Text("- ${product.name} x${product.qty} (${formatMxn(product.unitPriceMxn)})", style = MaterialTheme.typography.bodySmall)
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "Refacciones ${formatMxn(breakdown.productsTotalMxn)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ClientInk.copy(alpha = 0.68f)
+                    )
+                    Text(
+                        "Mano de obra ${formatMxn(breakdown.laborTotalMxn)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ClientInk.copy(alpha = 0.68f)
+                    )
                 }
             }
-            if (order.completionToken.isNotBlank()) Text("Código de confirmación: ${order.completionToken}")
-            if (order.userNotes.isNotBlank()) Text(order.userNotes, style = MaterialTheme.typography.bodySmall)
+            if (order.completionToken.isNotBlank()) {
+                androidx.compose.material3.Surface(
+                    color = ClientSky,
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            "Código de confirmación",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = ClientInk.copy(alpha = 0.68f)
+                        )
+                        Text(
+                            order.completionToken,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = ClientInk
+                        )
+                    }
+                }
+            }
+            if (order.userNotes.isNotBlank()) {
+                Text(
+                    order.userNotes,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ClientInk.copy(alpha = 0.7f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ServiceOrderMetric(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    androidx.compose.material3.Surface(
+        modifier = modifier,
+        color = ClientSurfaceMuted,
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = ClientInk.copy(alpha = 0.56f))
+            Text(value, style = MaterialTheme.typography.titleSmall, color = ClientInk)
         }
     }
 }
@@ -318,9 +465,20 @@ internal fun RecommendationSection(
 private fun serviceOrderTone(status: String): ClientBadgeTone {
     return when (status.lowercase()) {
         "completed", "completado", "done" -> ClientBadgeTone.Success
-        "pending", "pendiente" -> ClientBadgeTone.Warning
+        "scheduled", "programado", "pending", "pendiente" -> ClientBadgeTone.Warning
         "cancelled", "canceled", "cancelado" -> ClientBadgeTone.Danger
         else -> ClientBadgeTone.Info
+    }
+}
+
+private fun serviceOrderStatusLabel(status: String): String {
+    return when (status.lowercase()) {
+        "scheduled", "programado" -> "Programado"
+        "pending", "pendiente" -> "Pendiente"
+        "in_progress", "in progress", "en_proceso" -> "En proceso"
+        "completed", "completado", "done" -> "Completado"
+        "cancelled", "canceled", "cancelado" -> "Cancelado"
+        else -> "En seguimiento"
     }
 }
 

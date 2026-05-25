@@ -16,6 +16,7 @@ import androidx.compose.material.icons.outlined.LocalGasStation
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -34,70 +35,89 @@ import com.itsm.caremycar.screens.user.components.ClientInk
 import com.itsm.caremycar.screens.user.components.ClientPanel
 import com.itsm.caremycar.screens.user.components.ClientPrimaryButton
 import com.itsm.caremycar.screens.user.components.ClientSectionHeader
+import com.itsm.caremycar.screens.user.components.ClientPullToRefresh
 import com.itsm.caremycar.screens.user.components.clientFieldColors
 import com.itsm.caremycar.screens.user.util.formatMxn
 import com.itsm.caremycar.vehicle.MonthlyCostEstimate
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MonthlyCostContent(
     innerPadding: PaddingValues = PaddingValues(),
     viewModel: MonthlyCostViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var monthlyKm by remember { mutableStateOf("1200") }
-    var kmPerLiter by remember { mutableStateOf("13") }
-    var fuelPrice by remember { mutableStateOf("24.5") }
-    var maintenancePerKm by remember { mutableStateOf("0.8") }
+    var monthlyKm by remember { mutableStateOf("") }
+    var kmPerLiter by remember { mutableStateOf("") }
+    var fuelPrice by remember { mutableStateOf("") }
+    var maintenancePerKm by remember { mutableStateOf("") }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            MonthlyCostHero(
-                monthlyKm = monthlyKm,
-                estimate = uiState.estimate
-            )
-        }
-
-        uiState.error?.let { error ->
-            item {
-                ClientInlineAlert(
-                    text = error,
-                    tone = ClientBadgeTone.Danger
+    ClientPullToRefresh(
+        isRefreshing = uiState.isRefreshing,
+        onRefresh = {
+            if (uiState.estimate != null) {
+                viewModel.calculate(
+                    monthlyKm = monthlyKm,
+                    kmPerLiter = kmPerLiter,
+                    fuelPrice = fuelPrice,
+                    maintenancePerKm = maintenancePerKm,
+                    fromRefresh = true
                 )
             }
-        }
+        },
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item {
+                MonthlyCostHero(
+                    monthlyKm = monthlyKm,
+                    estimate = uiState.estimate
+                )
+            }
 
-        item {
-            MonthlyCostForm(
-                monthlyKm = monthlyKm,
-                kmPerLiter = kmPerLiter,
-                fuelPrice = fuelPrice,
-                maintenancePerKm = maintenancePerKm,
-                isCalculating = uiState.isCalculating,
-                onMonthlyKmChange = { monthlyKm = it },
-                onKmPerLiterChange = { kmPerLiter = it },
-                onFuelPriceChange = { fuelPrice = it },
-                onMaintenancePerKmChange = { maintenancePerKm = it },
-                onCalculate = {
-                    viewModel.calculate(
-                        monthlyKm = monthlyKm,
-                        kmPerLiter = kmPerLiter,
-                        fuelPrice = fuelPrice,
-                        maintenancePerKm = maintenancePerKm
+            uiState.error?.let { error ->
+                item {
+                    ClientInlineAlert(
+                        text = error,
+                        tone = ClientBadgeTone.Danger
                     )
                 }
-            )
-        }
+            }
 
-        uiState.estimate?.let { estimate ->
             item {
-                MonthlyCostResult(estimate = estimate)
+                MonthlyCostForm(
+                    monthlyKm = monthlyKm,
+                    kmPerLiter = kmPerLiter,
+                    fuelPrice = fuelPrice,
+                    maintenancePerKm = maintenancePerKm,
+                    isCalculating = uiState.isCalculating,
+                    onMonthlyKmChange = { monthlyKm = it },
+                    onKmPerLiterChange = { kmPerLiter = it },
+                    onFuelPriceChange = { fuelPrice = it },
+                    onMaintenancePerKmChange = { maintenancePerKm = it },
+                    onCalculate = {
+                        viewModel.calculate(
+                            monthlyKm = monthlyKm,
+                            kmPerLiter = kmPerLiter,
+                            fuelPrice = fuelPrice,
+                            maintenancePerKm = maintenancePerKm
+                        )
+                    }
+                )
+            }
+
+            uiState.estimate?.let { estimate ->
+                item {
+                    MonthlyCostResult(estimate = estimate)
+                }
             }
         }
     }
@@ -152,10 +172,10 @@ private fun MonthlyCostForm(
                 eyebrow = "Datos",
                 title = "Parámetros de cálculo"
             )
-            CostNumberField("Kilómetros al mes", monthlyKm, onMonthlyKmChange)
-            CostNumberField("Rendimiento (km/l)", kmPerLiter, onKmPerLiterChange)
-            CostNumberField("Precio por litro", fuelPrice, onFuelPriceChange)
-            CostNumberField("Mantenimiento por km", maintenancePerKm, onMaintenancePerKmChange)
+            CostNumberField("Kilómetros al mes", "Ej. 1200", monthlyKm, onMonthlyKmChange)
+            CostNumberField("Rendimiento (km/l)", "Ej. 13", kmPerLiter, onKmPerLiterChange)
+            CostNumberField("Precio por litro", "Ej. 24.50", fuelPrice, onFuelPriceChange)
+            CostNumberField("Mantenimiento por km", "Ej. 0.80", maintenancePerKm, onMaintenancePerKmChange)
             ClientPrimaryButton(
                 text = "Calcular costo mensual",
                 onClick = onCalculate,
@@ -209,6 +229,7 @@ private fun MonthlyCostResult(estimate: MonthlyCostEstimate) {
 @Composable
 private fun CostNumberField(
     label: String,
+    placeholder: String,
     value: String,
     onValueChange: (String) -> Unit
 ) {
@@ -218,6 +239,7 @@ private fun CostNumberField(
             onValueChange(input.sanitizeDecimalInput())
         },
         label = { Text(label) },
+        placeholder = { Text(placeholder) },
         colors = clientFieldColors(),
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

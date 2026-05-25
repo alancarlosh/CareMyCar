@@ -5,6 +5,7 @@ import com.itsm.caremycar.vehicle.Vehicle
 
 data class VehicleUiState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val isLoadingReminders: Boolean = false,
     val isDeletingVehicle: Boolean = false,
     val vehicles: List<Vehicle> = emptyList(),

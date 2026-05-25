@@ -30,6 +30,24 @@ class VehicleViewModel @Inject constructor(
         loadUpcomingReminders()
     }
 
+    fun refreshFromPull() {
+        viewModelScope.launch {
+            updateState { copy(isRefreshing = true, loadError = null, remindersError = null) }
+            val vehiclesResult = vehicleRepository.listVehicles()
+            val remindersResult = vehicleRepository.getMaintenanceUpcoming()
+
+            updateState {
+                copy(
+                    isRefreshing = false,
+                    vehicles = (vehiclesResult as? Resource.Success)?.data ?: vehicles,
+                    reminders = (remindersResult as? Resource.Success)?.data ?: reminders,
+                    loadError = (vehiclesResult as? Resource.Error)?.message,
+                    remindersError = (remindersResult as? Resource.Error)?.message
+                )
+            }
+        }
+    }
+
     fun loadVehicles() {
         viewModelScope.launch {
             updateState { copy(isLoading = true, loadError = null) }

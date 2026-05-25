@@ -7,9 +7,9 @@ plugins {
 }
 
 val debugApiBaseUrl: String = findProperty("debugApiBaseUrl") as? String
-    ?: "http://10.0.2.2:5000/"
+    ?: "https://caremycarapi-node.onrender.com/"
 val releaseApiBaseUrl: String = findProperty("releaseApiBaseUrl") as? String
-    ?: "https://example.invalid/"
+    ?: "https://caremycarapi-node.onrender.com/"
 
 kotlin {
     jvmToolchain(17)

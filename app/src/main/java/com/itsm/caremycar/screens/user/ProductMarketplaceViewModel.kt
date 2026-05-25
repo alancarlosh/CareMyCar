@@ -25,12 +25,39 @@ class ProductMarketplaceViewModel @Inject constructor(
     internal val events: SharedFlow<ClientFeedbackEvent> = _events.asSharedFlow()
 
     init {
-        refresh()
+        loadProducts()
+        loadMyPurchases()
     }
 
     fun refresh() {
-        loadProducts()
-        loadMyPurchases()
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isRefreshing = true, loadError = null)
+            val productsResult = repository.listMarketplaceProducts(
+                query = null,
+                category = null,
+                page = 1,
+                limit = 100
+            )
+            val purchasesResult = repository.listMyPurchases(status = null, page = 1, limit = 20)
+
+            val products = (productsResult as? Resource.Success)?.data?.first
+                ?: _uiState.value.products
+            val purchases = (purchasesResult as? Resource.Success)?.data?.items
+                ?.map { it.toOrder() }
+                ?: _uiState.value.purchases
+            val error = when {
+                productsResult is Resource.Error -> productsResult.message
+                purchasesResult is Resource.Error -> purchasesResult.message
+                else -> null
+            }
+
+            _uiState.value = _uiState.value.copy(
+                isRefreshing = false,
+                products = products,
+                purchases = purchases,
+                loadError = error
+            )
+        }
     }
 
     private fun loadProducts() {
@@ -91,7 +118,9 @@ class ProductMarketplaceViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isBuying = true)
             when (val result = repository.purchaseMarketplaceProduct(partId = partId, quantity = quantity)) {
                 is Resource.Success -> {
-                    emitMessage("Compra realizada (${result.data.quantity} pza). Estado: ${result.data.status}")
+                    emitMessage(
+                        "Compra realizada: ${result.data.quantity} pieza(s). Estado: ${purchaseStatusLabel(result.data.status)}."
+                    )
                     _uiState.value = _uiState.value.copy(
                         isBuying = false
                     )
@@ -112,5 +141,16 @@ class ProductMarketplaceViewModel @Inject constructor(
 
     private fun emitMessage(text: String, isError: Boolean = false) {
         _events.tryEmit(ClientFeedbackEvent.Message(text = text, isError = isError))
+    }
+
+    private fun purchaseStatusLabel(status: String): String {
+        return when (status.lowercase()) {
+            "pending", "pendiente" -> "Pendiente"
+            "confirmed", "confirmado" -> "Confirmado"
+            "completed", "completado", "paid", "pagado" -> "Completado"
+            "delivered", "entregado" -> "Entregado"
+            "cancelled", "canceled", "cancelado" -> "Cancelado"
+            else -> "En proceso"
+        }
     }
 }

@@ -33,8 +33,8 @@ The app follows a Compose-first MVVM approach:
 
 ### Configure API base URLs
 Base URLs are configured in `gradle.properties`:
-- `debugApiBaseUrl` defaults to the Android emulator host (`http://10.0.2.2:5000/`)
-- `releaseApiBaseUrl` must be replaced with the HTTPS production API before creating a release build
+- `debugApiBaseUrl`: `https://caremycarapi-node.onrender.com/`
+- `releaseApiBaseUrl`: `https://caremycarapi-node.onrender.com/`
 
 ### Run
 1. Open the project in Android Studio.

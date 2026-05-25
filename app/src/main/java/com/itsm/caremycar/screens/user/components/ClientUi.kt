@@ -27,7 +27,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.material3.IconButton
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
@@ -47,6 +52,32 @@ internal val ClientSurface = Color.White
 internal val ClientSurfaceMuted = Color(0xFFF1F6F9)
 internal val ClientDanger = Color(0xFFC2413A)
 internal val ClientSuccess = Color(0xFF207A5A)
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+internal fun ClientPullToRefresh(
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isRefreshing,
+        onRefresh = onRefresh,
+        refreshThreshold = 48.dp
+    )
+
+    Box(modifier = modifier.pullRefresh(pullRefreshState)) {
+        content()
+        PullRefreshIndicator(
+            refreshing = isRefreshing,
+            state = pullRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter),
+            backgroundColor = ClientSurface,
+            contentColor = ClientBlue
+        )
+    }
+}
 
 @Composable
 internal fun ClientBackground(content: @Composable () -> Unit) {

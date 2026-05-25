@@ -15,11 +15,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
@@ -75,6 +78,7 @@ import com.itsm.caremycar.screens.user.components.ClientMint
 import com.itsm.caremycar.screens.user.components.ClientSky
 import com.itsm.caremycar.screens.user.components.ClientTopAppBar
 import com.itsm.caremycar.screens.user.components.ClientSurface
+import com.itsm.caremycar.screens.user.components.ClientSurfaceMuted
 import com.itsm.caremycar.screens.user.components.ClientBadgeTone
 import com.itsm.caremycar.screens.user.components.ClientStatusBadge
 import com.itsm.caremycar.screens.user.components.ClientPrimaryButton
@@ -83,6 +87,8 @@ import com.itsm.caremycar.screens.user.components.ClientVehicleImagePlaceholder
 import com.itsm.caremycar.screens.user.components.ClientDialogAction
 import com.itsm.caremycar.screens.user.components.ClientInlineAlert
 import com.itsm.caremycar.screens.user.components.ClientHeroMetric
+import com.itsm.caremycar.screens.user.components.ClientPullToRefresh
+import com.itsm.caremycar.vehicle.MaintenanceDueSummary
 import com.itsm.caremycar.vehicle.Vehicle
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -140,7 +146,11 @@ fun UserScreen(
                     ) {
                         BadgedBox(
                             badge = {
-                                val count = uiState.reminders.size
+                                val count = uiState.reminders.sumOf { reminder ->
+                                    reminder.items.count { item ->
+                                        item.status == "due" || item.status == "upcoming"
+                                    }
+                                }
                                 if (count > 0) {
                                     Badge { Text(if (count > 99) "99+" else count.toString()) }
                                 }
@@ -189,6 +199,7 @@ fun UserScreen(
                     UserScreenContent(
                         innerPadding = innerPadding,
                         uiState = uiState,
+                        onRefresh = viewModel::refreshFromPull,
                         onRetry = viewModel::loadVehicles,
                         onAddVehicleClick = onAddVehicleClick,
                         onVehicleClick = onVehicleClick,
@@ -205,7 +216,7 @@ fun UserScreen(
     if (showRemindersDialog) {
         ClientDialog(
             onDismissRequest = { showRemindersDialog = false },
-            title = "Buzón de mantenimiento",
+            title = "Mantenimiento",
             text = {
                 if (uiState.isLoadingReminders) {
                     ClientLoadingPanel(
@@ -213,33 +224,17 @@ fun UserScreen(
                         description = "Revisamos el estado de tus próximos mantenimientos."
                     )
                 } else if (uiState.remindersError != null) {
-                    Text(uiState.remindersError.orEmpty())
+                    ClientInlineAlert(
+                        text = uiState.remindersError.orEmpty(),
+                        tone = ClientBadgeTone.Danger
+                    )
                 } else if (uiState.reminders.isEmpty()) {
-                    Text("No hay vehículos con mantenimiento próximo por ahora.")
+                    ClientInlineAlert(
+                        text = "No tienes mantenimientos vencidos ni próximos por ahora.",
+                        tone = ClientBadgeTone.Success
+                    )
                 } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        uiState.reminders.take(6).forEach { reminder ->
-                            val dueCount = reminder.items.count { it.status == "due" }
-                            val upcomingCount = reminder.items.count { it.status == "upcoming" }
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text(
-                                    text = reminder.vehicleLabel,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = ClientInk
-                                )
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    ClientStatusBadge(
-                                        text = "$dueCount vencido(s)",
-                                        tone = if (dueCount > 0) ClientBadgeTone.Danger else ClientBadgeTone.Neutral
-                                    )
-                                    ClientStatusBadge(
-                                        text = "$upcomingCount próximo(s)",
-                                        tone = if (upcomingCount > 0) ClientBadgeTone.Warning else ClientBadgeTone.Neutral
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    MaintenanceInboxContent(reminders = uiState.reminders)
                 }
             },
             confirmButton = {
@@ -287,6 +282,110 @@ fun UserScreen(
                 )
             }
         )
+    }
+}
+
+@Composable
+private fun MaintenanceInboxContent(reminders: List<MaintenanceDueSummary>) {
+    val dueCount = reminders.sumOf { reminder ->
+        reminder.items.count { it.status == "due" }
+    }
+    val upcomingCount = reminders.sumOf { reminder ->
+        reminder.items.count { it.status == "upcoming" }
+    }
+
+    Column(
+        modifier = Modifier
+            .heightIn(max = 450.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Surface(
+            color = ClientSky,
+            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(9.dp)
+            ) {
+                Text(
+                    text = "Resumen de alertas",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = ClientInk
+                )
+                Text(
+                    text = "Prioriza los servicios pendientes de tus vehículos.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ClientInk.copy(alpha = 0.66f)
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ClientStatusBadge(
+                        text = "$dueCount vencido(s)",
+                        tone = if (dueCount > 0) ClientBadgeTone.Danger else ClientBadgeTone.Neutral
+                    )
+                    ClientStatusBadge(
+                        text = "$upcomingCount próximo(s)",
+                        tone = if (upcomingCount > 0) ClientBadgeTone.Warning else ClientBadgeTone.Neutral
+                    )
+                }
+            }
+        }
+
+        reminders.take(6).forEach { reminder ->
+            MaintenanceReminderVehicleRow(reminder = reminder)
+        }
+    }
+}
+
+@Composable
+private fun MaintenanceReminderVehicleRow(reminder: MaintenanceDueSummary) {
+    val dueCount = reminder.items.count { it.status == "due" }
+    val upcomingCount = reminder.items.count { it.status == "upcoming" }
+
+    Surface(
+        color = ClientSurfaceMuted,
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(color = Color.White, shape = RoundedCornerShape(12.dp)) {
+                Icon(
+                    imageVector = Icons.Outlined.DirectionsCar,
+                    contentDescription = null,
+                    tint = ClientBlue,
+                    modifier = Modifier.padding(10.dp)
+                )
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                Text(
+                    text = reminder.vehicleLabel,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = ClientInk
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (dueCount > 0) {
+                        ClientStatusBadge(
+                            text = "$dueCount vencido(s)",
+                            tone = ClientBadgeTone.Danger
+                        )
+                    }
+                    if (upcomingCount > 0) {
+                        ClientStatusBadge(
+                            text = "$upcomingCount próximo(s)",
+                            tone = ClientBadgeTone.Warning
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -363,88 +462,96 @@ private fun ClientBottomNavigationItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun UserScreenContent(
     innerPadding: PaddingValues,
     uiState: VehicleUiState,
+    onRefresh: () -> Unit,
     onRetry: () -> Unit,
     onAddVehicleClick: () -> Unit,
     onVehicleClick: (String) -> Unit,
     onDeleteVehicleClick: (Vehicle) -> Unit
 ) {
-    when {
-        uiState.isLoading -> {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                ClientLoadingPanel(
-                    title = "Cargando garaje",
-                    description = "Estamos reuniendo tus vehículos y recordatorios."
-                )
-            }
-        }
-
-        uiState.loadError != null && uiState.vehicles.isEmpty() -> {
-            EmptyGarageState(
-                modifier = Modifier.padding(innerPadding),
-                message = uiState.loadError,
-                actionLabel = "Reintentar",
-                onAction = onRetry,
-                secondaryActionLabel = null,
-                onSecondaryAction = null
-            )
-        }
-
-        uiState.vehicles.isEmpty() -> {
-            EmptyGarageState(
-                modifier = Modifier.padding(innerPadding),
-                message = "Aún no tienes vehículos registrados.",
-                actionLabel = "Agregar vehículo",
-                onAction = onAddVehicleClick,
-                secondaryActionLabel = "Actualizar",
-                onSecondaryAction = onRetry
-            )
-        }
-
-        else -> {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                GarageHeroCard(
-                    vehicleCount = uiState.vehicles.size,
-                    reminderCount = uiState.reminders.size,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
-                )
-
-                uiState.deleteError?.let { deleteError ->
-                    ClientInlineAlert(
-                        text = deleteError,
-                        tone = ClientBadgeTone.Danger,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+    ClientPullToRefresh(
+        isRefreshing = uiState.isRefreshing,
+        onRefresh = onRefresh,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+    ) {
+        when {
+            uiState.isLoading && uiState.vehicles.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ClientLoadingPanel(
+                        title = "Cargando garaje",
+                        description = "Estamos reuniendo tus vehículos y recordatorios."
                     )
                 }
+            }
 
-                LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+            uiState.loadError != null && uiState.vehicles.isEmpty() -> {
+                EmptyGarageState(
+                    modifier = Modifier,
+                    message = uiState.loadError,
+                    actionLabel = "Reintentar",
+                    onAction = onRetry,
+                    secondaryActionLabel = null,
+                    onSecondaryAction = null
+                )
+            }
+
+            uiState.vehicles.isEmpty() -> {
+                EmptyGarageState(
+                    modifier = Modifier,
+                    message = "Aún no tienes vehículos registrados.",
+                    actionLabel = "Agregar vehículo",
+                    onAction = onAddVehicleClick,
+                    secondaryActionLabel = "Actualizar",
+                    onSecondaryAction = onRetry
+                )
+            }
+
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
                 ) {
-                    items(uiState.vehicles, key = { it.id }) { vehicle ->
-                        val isRemoving = uiState.removingVehicleId == vehicle.id
-                        AnimatedVisibility(
-                            visible = !isRemoving,
-                            enter = fadeIn() + expandVertically(),
-                            exit = fadeOut() + shrinkVertically()
-                        ) {
-                            VehicleCard(
-                                vehicle = vehicle,
-                                onClick = { onVehicleClick(vehicle.id) },
-                                onDeleteClick = { onDeleteVehicleClick(vehicle) }
-                            )
+                    GarageHeroCard(
+                        vehicleCount = uiState.vehicles.size,
+                        reminderCount = uiState.reminders.size,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                    )
+
+                    uiState.deleteError?.let { deleteError ->
+                        ClientInlineAlert(
+                            text = deleteError,
+                            tone = ClientBadgeTone.Danger,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                        )
+                    }
+
+                    LazyColumn(
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(uiState.vehicles, key = { it.id }) { vehicle ->
+                            val isRemoving = uiState.removingVehicleId == vehicle.id
+                            AnimatedVisibility(
+                                visible = !isRemoving,
+                                enter = fadeIn() + expandVertically(),
+                                exit = fadeOut() + shrinkVertically()
+                            ) {
+                                VehicleCard(
+                                    vehicle = vehicle,
+                                    onClick = { onVehicleClick(vehicle.id) },
+                                    onDeleteClick = { onDeleteVehicleClick(vehicle) }
+                                )
+                            }
                         }
                     }
                 }
@@ -465,6 +572,7 @@ private fun EmptyGarageState(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 18.dp),
         verticalArrangement = Arrangement.Center
     ) {

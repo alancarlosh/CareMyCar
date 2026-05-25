@@ -24,7 +24,8 @@ class MonthlyCostViewModel @Inject constructor(
         monthlyKm: String,
         kmPerLiter: String,
         fuelPrice: String,
-        maintenancePerKm: String
+        maintenancePerKm: String,
+        fromRefresh: Boolean = false
     ) {
         val validation = MonthlyCostInputValidator.validate(
             monthlyKm = monthlyKm,
@@ -34,6 +35,7 @@ class MonthlyCostViewModel @Inject constructor(
         )
         if (validation is FormValidationResult.Invalid) {
             _uiState.value = _uiState.value.copy(
+                isRefreshing = false,
                 error = validation.message
             )
             return
@@ -41,7 +43,11 @@ class MonthlyCostViewModel @Inject constructor(
         val input = (validation as FormValidationResult.Valid).value
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isCalculating = true, error = null)
+            _uiState.value = _uiState.value.copy(
+                isCalculating = !fromRefresh,
+                isRefreshing = fromRefresh,
+                error = null
+            )
             when (
                 val result = repository.getMonthlyCostEstimate(
                     monthlyKm = input.monthlyKm,
@@ -53,6 +59,7 @@ class MonthlyCostViewModel @Inject constructor(
                 is Resource.Success -> {
                     _uiState.value = _uiState.value.copy(
                         isCalculating = false,
+                        isRefreshing = false,
                         estimate = result.data,
                         error = null
                     )
@@ -61,6 +68,7 @@ class MonthlyCostViewModel @Inject constructor(
                 is Resource.Error -> {
                     _uiState.value = _uiState.value.copy(
                         isCalculating = false,
+                        isRefreshing = false,
                         error = result.message
                     )
                 }
