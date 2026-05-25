@@ -4,6 +4,8 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import java.time.Instant
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import java.time.ZoneId
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -32,4 +34,18 @@ internal fun todayMillis(): Long {
         .atStartOfDay(ZoneId.systemDefault())
         .toInstant()
         .toEpochMilli()
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+internal fun formatMaintenanceDate(date: String): String {
+    return try {
+        LocalDate.parse(date).format(
+            DateTimeFormatter.ofPattern(
+                "d MMM yyyy",
+                Locale.Builder().setLanguage("es").setRegion("MX").build()
+            )
+        )
+    } catch (_: Exception) {
+        date
+    }
 }

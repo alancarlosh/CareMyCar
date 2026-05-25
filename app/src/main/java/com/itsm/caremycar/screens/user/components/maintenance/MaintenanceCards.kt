@@ -401,6 +401,7 @@ private fun ServiceOrderMetric(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 internal fun RecommendationSection(
     recommendations: List<MaintenanceRecommendation>,
@@ -418,11 +419,7 @@ internal fun RecommendationSection(
                 .sortedBy { it.daysLeft }
                 .take(3)
                 .forEach { rec ->
-                    val statusText = when (rec.status) {
-                        "due" -> "Vencido"
-                        "upcoming" -> "Próximo"
-                        else -> "OK"
-                    }
+                    val statusText = recommendationStatusLabel(rec)
                     ElevatedCard(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -443,12 +440,25 @@ internal fun RecommendationSection(
                                 )
                                 ClientStatusBadge(
                                     text = statusText,
-                                    tone = recommendationTone(rec.status)
+                                    tone = recommendationTone(rec)
                                 )
                             }
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                ClientMetricChip("Fecha", rec.dueDate)
+                                ClientMetricChip("Fecha sugerida", formatMaintenanceDate(rec.dueDate))
                                 ClientMetricChip("Km objetivo", rec.dueKm.toString())
+                            }
+                            recommendationDescription(rec)?.let { description ->
+                                androidx.compose.material3.Surface(
+                                    color = ClientSky.copy(alpha = 0.68f),
+                                    shape = RoundedCornerShape(14.dp)
+                                ) {
+                                    Text(
+                                        text = description,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = ClientInk.copy(alpha = 0.72f)
+                                    )
+                                }
                             }
                             ClientSecondaryButton(
                                 text = "Usar recomendación",
@@ -482,10 +492,30 @@ private fun serviceOrderStatusLabel(status: String): String {
     }
 }
 
-private fun recommendationTone(status: String): ClientBadgeTone {
-    return when (status) {
-        "due" -> ClientBadgeTone.Danger
-        "upcoming" -> ClientBadgeTone.Warning
+private fun recommendationTone(rec: MaintenanceRecommendation): ClientBadgeTone {
+    return when {
+        rec.status == "due" && rec.daysLeft > 0 && rec.kmLeft <= 0 -> ClientBadgeTone.Warning
+        rec.status == "due" -> ClientBadgeTone.Danger
+        rec.status == "upcoming" -> ClientBadgeTone.Warning
         else -> ClientBadgeTone.Success
+    }
+}
+
+private fun recommendationStatusLabel(rec: MaintenanceRecommendation): String {
+    return when {
+        rec.status == "due" && rec.daysLeft > 0 && rec.kmLeft <= 0 -> "Por kilometraje"
+        rec.status == "due" -> "Vencido"
+        rec.status == "upcoming" -> "Próximo"
+        else -> "Al día"
+    }
+}
+
+private fun recommendationDescription(rec: MaintenanceRecommendation): String? {
+    return when {
+        rec.status == "due" && rec.daysLeft > 0 && rec.kmLeft <= 0 ->
+            "El kilometraje recomendado ya se alcanzó; puedes agendarlo aunque la fecha sugerida sea posterior."
+        rec.status == "due" && rec.daysLeft <= 0 ->
+            "La fecha sugerida ya pasó; conviene agendar este servicio."
+        else -> null
     }
 }
