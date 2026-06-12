@@ -1,0 +1,68 @@
+flowchart LR
+  client([Cliente])
+
+  subgraph app["Perfil Cliente"]
+    direction LR
+
+    subgraph main["Casos de uso principales"]
+      direction TB
+      register["Registrarse"]
+      login["Iniciar sesión"]
+      logout["Cerrar sesión"]
+      vehicles["Gestionar vehículos"]
+      maintenance["Gestionar mantenimiento"]
+      products["Consultar productos"]
+      service["Cotizar y solicitar servicio"]
+      costs["Calcular costo mensual"]
+    end
+
+    subgraph detail["Casos incluidos / extendidos"]
+      direction TB
+      registerData(("Registrar datos del usuario\ncorreo, contraseña y nombre"))
+      addVehicle(("Agregar vehículo\nmarca, modelo, año y kilometraje"))
+      editVehicle(("Actualizar datos del vehículo\nkilometraje y datos generales"))
+      deleteVehicle(("Eliminar vehículo"))
+      reminders(("Consultar recordatorios\nde mantenimiento"))
+      recommendations(("Consultar recomendaciones\nautomáticas"))
+      createMaintenance(("Registrar mantenimiento"))
+      buyProduct(("Comprar productos"))
+      myPurchases(("Consultar mis compras"))
+      quote(("Solicitar cotización\nde servicio"))
+      order(("Crear orden de servicio"))
+      myOrders(("Consultar mis órdenes\nde servicio"))
+      estimate(("Enviar parámetros numéricos\nkm/mes, rendimiento, gasolina\ny mantenimiento/km"))
+    end
+  end
+
+  client --> register
+  client --> login
+  client --> logout
+  client --> vehicles
+  client --> maintenance
+  client --> products
+  client --> service
+  client --> costs
+
+  register -. "<<include>>" .-> registerData
+  vehicles -. "<<include>>" .-> addVehicle
+  vehicles -. "<<include>>" .-> editVehicle
+  vehicles -. "<<include>>" .-> deleteVehicle
+  maintenance -. "<<include>>" .-> reminders
+  maintenance -. "<<include>>" .-> recommendations
+  maintenance -. "<<include>>" .-> createMaintenance
+  products -. "<<extend>>" .-> buyProduct
+  products -. "<<extend>>" .-> myPurchases
+  service -. "<<include>>" .-> quote
+  service -. "<<include>>" .-> order
+  service -. "<<extend>>" .-> myOrders
+  costs -. "<<include>>" .-> estimate
+
+  classDef actor fill:#000,color:#fff,stroke:#000,stroke-width:2px;
+  classDef main fill:#5F3DC4,color:#fff,stroke:#5F3DC4,stroke-width:2px,rx:8,ry:8;
+  classDef detail fill:#5F3DC4,color:#fff,stroke:#5F3DC4,stroke-width:2px;
+  classDef group fill:#EFEFEF,stroke:#EFEFEF,color:#102A43;
+
+  class client actor;
+  class register,login,logout,vehicles,maintenance,products,service,costs main;
+  class registerData,addVehicle,editVehicle,deleteVehicle,reminders,recommendations,createMaintenance,buyProduct,myPurchases,quote,order,myOrders,estimate detail;
+  class app group;

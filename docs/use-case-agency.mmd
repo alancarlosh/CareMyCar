@@ -1,0 +1,72 @@
+flowchart LR
+  agency([Agencia])
+
+  subgraph app["Perfil Agencia"]
+    direction LR
+
+    subgraph main["Casos de uso principales"]
+      direction TB
+      login["Iniciar sesión"]
+      logout["Cerrar sesión"]
+      catalog["Gestionar catálogo\nde refacciones"]
+      orders["Gestionar pedidos\ny ventas"]
+      reminders["Consultar recordatorios\nde clientes"]
+      serviceOrders["Gestionar órdenes\nde servicio"]
+      reports["Generar reportes"]
+    end
+
+    subgraph detail["Casos incluidos / extendidos"]
+      direction TB
+      listParts(("Consultar refacciones"))
+      addPart(("Añadir refacción"))
+      editPart(("Modificar detalles\nde refacción"))
+      deletePart(("Eliminar refacción"))
+      createOrder(("Añadir pedido"))
+      editOrder(("Modificar pedido"))
+      deleteOrder(("Eliminar pedido"))
+      listOrders(("Consultar ventas\ny pedidos"))
+      clientVehicles(("Consultar datos sobre\nvehículos del cliente"))
+      allReminders(("Ver mantenimientos\nvencidos o próximos"))
+      listService(("Consultar solicitudes\nde servicio"))
+      startService(("Iniciar servicio"))
+      completeService(("Finalizar servicio\ncon costo y kilometraje"))
+      cancelService(("Cancelar servicio"))
+      salesPdf(("Descargar reporte PDF\nde ventas"))
+      servicePdf(("Descargar reporte\nde servicios"))
+    end
+  end
+
+  agency --> login
+  agency --> logout
+  agency --> catalog
+  agency --> orders
+  agency --> reminders
+  agency --> serviceOrders
+  agency --> reports
+
+  catalog -. "<<include>>" .-> listParts
+  catalog -. "<<include>>" .-> addPart
+  catalog -. "<<include>>" .-> editPart
+  catalog -. "<<include>>" .-> deletePart
+  orders -. "<<include>>" .-> createOrder
+  orders -. "<<include>>" .-> editOrder
+  orders -. "<<include>>" .-> deleteOrder
+  orders -. "<<include>>" .-> listOrders
+  orders -. "<<extend>>" .-> clientVehicles
+  reminders -. "<<include>>" .-> allReminders
+  serviceOrders -. "<<include>>" .-> listService
+  serviceOrders -. "<<include>>" .-> startService
+  serviceOrders -. "<<include>>" .-> completeService
+  serviceOrders -. "<<include>>" .-> cancelService
+  reports -. "<<include>>" .-> salesPdf
+  reports -. "<<include>>" .-> servicePdf
+
+  classDef actor fill:#000,color:#fff,stroke:#000,stroke-width:2px;
+  classDef main fill:#5F3DC4,color:#fff,stroke:#5F3DC4,stroke-width:2px,rx:8,ry:8;
+  classDef detail fill:#5F3DC4,color:#fff,stroke:#5F3DC4,stroke-width:2px;
+  classDef group fill:#EFEFEF,stroke:#EFEFEF,color:#102A43;
+
+  class agency actor;
+  class login,logout,catalog,orders,reminders,serviceOrders,reports main;
+  class listParts,addPart,editPart,deletePart,createOrder,editOrder,deleteOrder,listOrders,clientVehicles,allReminders,listService,startService,completeService,cancelService,salesPdf,servicePdf detail;
+  class app group;
