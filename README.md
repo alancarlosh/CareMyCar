@@ -1,61 +1,63 @@
 # CareMyCar
 
-CareMyCar is a native Android application designed to help drivers manage their vehicle lifecycle from one place: vehicle registration, maintenance recommendations, service orders, marketplace purchases, and cost estimation. The project is built as a portfolio-ready mobile client with a REST API integration, a Compose-first UI, and a clean MVVM-oriented structure.
+CareMyCar is a native Android application designed to help drivers manage their vehicle lifecycle from one place: vehicle registration, maintenance recommendations, service orders, marketplace purchases, and monthly cost estimation. The project is built as a portfolio-ready mobile client with a deployed REST API integration, a modern Compose UI, and a clean MVVM-oriented structure.
 
 <p align="center">
-  <img src="docs/images/login.png" width="210" alt="CareMyCar login screen" />
-  <img src="docs/images/vehicles-added.png" width="210" alt="Vehicle garage screen with registered vehicles" />
-  <img src="docs/images/service-order-created.png" width="210" alt="Maintenance service order created" />
+  <img src="docs/images/modern-login.png" width="210" alt="Modern CareMyCar login screen" />
+  <img src="docs/images/modern-vehicles.png" width="210" alt="Modern vehicle garage screen" />
+  <img src="docs/images/modern-costs.png" width="210" alt="Modern monthly cost estimator screen" />
 </p>
 
 ## Why This Project Stands Out
 
 - End-to-end Android client connected to a deployed backend API.
-- Role-oriented experience for customers and agency workflows.
+- Role-oriented experience for customer and agency workflows.
 - Vehicle catalog flow with brand/model selection and generated vehicle profiles.
 - Maintenance module with automatic recommendations, service quotes, and service order tracking.
 - Marketplace flow for spare parts purchases with quantity controls and recent purchases.
+- Monthly cost estimator based on numeric parameters such as mileage, fuel efficiency, fuel price, and maintenance cost per kilometer.
 - Secure session handling using encrypted local storage.
 - Modern Android stack: Kotlin, Jetpack Compose, Material 3, Hilt, Retrofit, OkHttp, Coroutines, and MVVM patterns.
 
-## Core Features
+## Modern UI Preview
 
 ### Authentication
 
-Users can sign in and keep their session protected through encrypted token storage.
+The authentication experience uses a clean, minimal layout with strong visual hierarchy, rounded input fields, password visibility controls, and clear navigation between login and registration.
 
 <p align="center">
-  <img src="docs/images/login.png" width="230" alt="Login screen with email and password fields" />
+  <img src="docs/images/modern-login.png" width="230" alt="Login screen with email and password fields" />
+  <img src="docs/images/modern-register.png" width="230" alt="Register screen with account creation fields" />
 </p>
 
 ### Vehicle Garage
 
-Customers can register, view, update, and delete vehicles. Each vehicle includes catalog metadata such as brand, model, type, fuel, transmission, color, year, and current mileage.
+Customers can register, view, update, and delete vehicles. Each vehicle is created from the catalog and includes brand, model, type, fuel, transmission, color, year, and current mileage.
 
 <p align="center">
-  <img src="docs/images/vehicles-list.png" width="210" alt="Garage with one registered vehicle" />
-  <img src="docs/images/add-vehicle.png" width="210" alt="Add vehicle form using the catalog" />
-  <img src="docs/images/vehicles-added.png" width="210" alt="Garage with multiple registered vehicles" />
-  <img src="docs/images/delete-vehicle-dialog.png" width="210" alt="Delete vehicle confirmation dialog" />
+  <img src="docs/images/modern-vehicles.png" width="230" alt="Vehicle garage with summary cards and registered car" />
+  <img src="docs/images/modern-add-vehicle.png" width="230" alt="Add vehicle flow with catalog selection" />
 </p>
 
-### Maintenance And Service Orders
+### Customer Modules
 
-The maintenance module recommends upcoming services based on vehicle data, lets customers request a quote, and creates trackable service orders with confirmation codes.
+The bottom navigation exposes the main customer flows: vehicles, marketplace products, and cost estimation. These screens are structured around summary cards, clear empty states, and focused actions.
 
 <p align="center">
-  <img src="docs/images/maintenance-recommendations.png" width="210" alt="Automatic maintenance recommendations" />
-  <img src="docs/images/service-quote.png" width="210" alt="Service quote and order information" />
-  <img src="docs/images/service-order-created.png" width="210" alt="Created service order with confirmation code" />
+  <img src="docs/images/modern-products.png" width="230" alt="Marketplace screen with product and purchase summaries" />
+  <img src="docs/images/modern-costs.png" width="230" alt="Monthly cost estimator with numeric parameters" />
 </p>
 
-### Marketplace
+## Core Features
 
-Customers can browse agency-published parts, select quantities, estimate totals, and review recent purchases.
-
-<p align="center">
-  <img src="docs/images/products-marketplace.png" width="230" alt="Products marketplace and recent purchases" />
-</p>
+- **Authentication:** user login, registration, protected session storage, and logout.
+- **Vehicle management:** create, list, update mileage, and delete customer vehicles.
+- **Catalog selection:** add vehicles from agency-managed brand and model records.
+- **Maintenance recommendations:** generate suggested services based on vehicle data and mileage.
+- **Service orders:** request services, review estimated costs, and track confirmation codes.
+- **Marketplace:** browse published parts, choose quantities, estimate totals, and register purchases.
+- **Cost estimator:** calculate monthly vehicle usage costs from numeric inputs.
+- **Notifications:** surface maintenance alerts and customer reminders.
 
 ## Tech Stack
 
@@ -94,6 +96,7 @@ The app consumes endpoints for:
 - Maintenance insights and recommendations.
 - Service orders, quotes, and confirmation codes.
 - Marketplace products and customer purchases.
+- Cost estimation using numeric vehicle usage parameters.
 
 ## Getting Started
 
